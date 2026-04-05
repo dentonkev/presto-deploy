@@ -1,15 +1,24 @@
 import { Box, TextField, Button } from '@mui/material';
 import { useState } from 'react';
+import { apiLogin } from '../api'
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const userLogin = async () => {
+    try {
+      const data = await apiLogin(email, password)
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
   return (
     <Box className="flex flex-col items-center justify-center h-screen gap-4"> 
-      <TextField id="outlined-basic" label="Email" variant="outlined" onChange={(e) => setEmail(e.target.value)} />
-      <TextField id="outlined-basic" label="Password" variant="outlined" onChange={(e) => setPassword(e.target.value)} />
-      <Button variant="contained">Login</Button>
+      <TextField id="email" label="Email" variant="outlined" onChange={(e) => setEmail(e.target.value)} />
+      <TextField id="password" label="Password" variant="outlined" onChange={(e) => setPassword(e.target.value)} />
+      <Button variant="contained" onClick={userLogin}>Login </Button>
     </Box>
   );
 };
