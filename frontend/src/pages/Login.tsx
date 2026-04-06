@@ -1,20 +1,22 @@
 import { useNavigate } from "react-router-dom";
 import { Box, TextField, Button, Typography } from "@mui/material";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { apiLogin } from "../api";
+import ErrorContext from "../context/ErrorContext";
 
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const showError = useContext(ErrorContext);
 
   const handleLogin = async () => {
     try {
       const token = await apiLogin(email, password);
       localStorage.setItem("token", token);
       navigate("/dashboard");
-    } catch (err) {
-      // TODO: call error func
+    } catch (err: any) {
+      showError(err.message);
     }
   };
 

@@ -2,12 +2,14 @@ import { useNavigate } from "react-router-dom";
 import { Box, TextField, Button, Typography } from "@mui/material";
 import { useState } from "react";
 import { apiRegister } from "../api";
+import ErrorContext from "../context/ErrorContext";
 
 const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const showError = useContext(ErrorContext);
 
   const navigate = useNavigate();
 
@@ -16,8 +18,8 @@ const Register = () => {
       const token = await apiRegister(name, email, password);
       localStorage.setItem("token", token);
       navigate("/dashboard");
-    } catch (err) {
-      // TODO: call error func
+    } catch (err: any) {
+      showError(err.message);
     }
   };
 
