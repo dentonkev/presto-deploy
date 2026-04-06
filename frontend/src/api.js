@@ -8,10 +8,12 @@ export const apiLogin = async (email, password) => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
+
   const data = await res.json();
   if (!res.ok) {
     throw new Error(data.error);
   }
+  
   return data.token;
 };
 
@@ -21,11 +23,30 @@ export const apiRegister = async (name, email, password) => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password, name }),
   });
+
   const data = await res.json();
   if (!res.ok) {
     throw new Error(data.error);
   }
+
   return data.token;
+};
+
+export const apiFetchStore = async () => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${URL}/store`, {
+    headers: {
+      "Authorization": `Bearer ${token}`,
+    }
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error);
+  }
+
+  return data;
 };
 
 export const apiStorePresentation = async (presentation) => {
