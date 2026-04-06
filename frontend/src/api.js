@@ -53,14 +53,14 @@ export const apiStorePresentation = async (presentation) => {
   const token = localStorage.getItem("token");
 
   // Get current store
-  const data = await apiFetchStore();
+  const dataStore = await apiFetchStore();
 
-  const store = data.store || {};
+  const store = dataStore.store || {};
   const presentations = store.presentations || [];
 
   presentations.push(presentation);
 
-  await fetch(`${URL}/store`, {
+  const res = await fetch(`${URL}/store`, {
     method: "PUT",
     headers: { 
       "Content-Type": "application/json",
@@ -73,6 +73,11 @@ export const apiStorePresentation = async (presentation) => {
       },
     }),
   });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error);
+  }
 
   return presentations;
 };

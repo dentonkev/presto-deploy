@@ -1,8 +1,9 @@
 import { Button, Modal, Box, TextField, Card } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { apiFetchStore, apiStorePresentation } from "../api";
 import { useMediaQuery } from "@mui/material";
+import ErrorContext from "../context/ErrorContext";
 
 type Presentation = {
   id: string;
@@ -19,6 +20,7 @@ const Dashboard = () => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [thumbnail, setThumbnail] = useState<string | ArrayBuffer | null>(null);
+  const showError = useContext(ErrorContext);
 
   const isMobile = useMediaQuery("(max-width:700px)");
 
@@ -51,8 +53,8 @@ const Dashboard = () => {
       setDescription("");
       setThumbnail("");
       setOpen(false);
-    } catch (err) {
-      console.log(err);
+    } catch (err: any) {
+      showError(err.message);
     }
   };
 
@@ -70,8 +72,11 @@ const Dashboard = () => {
 
   useEffect(() => {
     apiFetchStore()
-      .then((data) => {
+      .then((data: any) => {
         setPresentations(data.store?.presentations || []);
+      })
+      .catch((err: any) => {
+        showError(err.message);
       });
   }, []);
 
@@ -83,7 +88,7 @@ const Dashboard = () => {
         </Button>
         <Modal
           open={open}
-          onClose={handleCreate}
+          onClose={handleClose}
           aria-labelledby="modal-modal-title"
           aria-describedby="modal-modal-description"
         >
