@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Box, TextField, Button, Typography } from "@mui/material";
-import { useContext, useState } from "react";
+import { useContext, useState, type FormEvent } from "react";
 import { apiLogin } from "../api";
 import ErrorContext from "../context/ErrorContext";
 
@@ -20,13 +20,15 @@ const Login = () => {
     }
   };
 
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    handleLogin();
+  };
+
   return (
     <Box
       component="form"
-      onSubmit={(e) => {
-        e.preventDefault();
-        handleLogin();
-      }}
+      onSubmit={handleSubmit}
       className="flex flex-col items-center justify-center h-screen gap-4"
     >
       <Typography variant="h5" fontWeight="bold">

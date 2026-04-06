@@ -1,7 +1,7 @@
 import { createContext, useState, type ReactNode } from "react";
 import ErrorModal from "../components/ErrorModal";
 
-const ErrorContext = createContext<(msg: string) => void>(() => {});
+const ErrorContext = createContext<(_: string) => void>(() => {});
 
 export const ErrorProvider = ({ children }: { children: ReactNode }) => {
   const [errorMsg, setErrorMsg] = useState("");
