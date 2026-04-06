@@ -1,7 +1,7 @@
-import { Button, Modal, Box, TextField } from '@mui/material'
-import { useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import { apiStorePresentation } from '../api';
+import { Button, Modal, Box, TextField } from "@mui/material";
+import { useState } from "react";
+import { v4 as uuidv4 } from "uuid";
+import { apiStorePresentation } from "../api";
 
 const Dashboard = () => {
   const [open, setOpen] = useState(false);
@@ -15,26 +15,26 @@ const Dashboard = () => {
 
   const handleCreate = async () => {
     try {
-      const newPresentation = { 
+      const newPresentation = {
         id: uuidv4(),
-        name, 
-        description, 
+        name,
+        description,
         thumbnail,
         sildes: [
           {
-            id: uuidv4()
-          }
-        ] 
-      }
+            id: uuidv4(),
+          },
+        ],
+      };
 
       await apiStorePresentation(newPresentation);
-      
-      setName("")
-      setDescription("")
-      setThumbnail("")
-      setOpen(false)
+
+      setName("");
+      setDescription("");
+      setThumbnail("");
+      setOpen(false);
     } catch (err) {
-      console.log(err)
+      console.log(err);
     }
   };
 
@@ -48,13 +48,13 @@ const Dashboard = () => {
       setThumbnail(reader.result);
     };
     reader.readAsDataURL(file);
-  }
+  };
 
   return (
-    <main className='flex flex-col items-center justify-center h-screen gap-4 bg-[#f0f1f3]'>
-      <Button 
-        variant="contained"
-        onClick={handleOpen}>New presentation</Button>
+    <main className="flex flex-col items-center justify-center h-screen gap-4 bg-[#f0f1f3]">
+      <Button variant="contained" onClick={handleOpen}>
+        New presentation
+      </Button>
       <Modal
         open={open}
         onClose={handleCreate}
@@ -62,14 +62,14 @@ const Dashboard = () => {
         aria-describedby="modal-modal-description"
       >
         <Box className="absolute flex flex-col top-1/2 left-1/2 w-96 -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl gap-4">
-          <TextField 
-            label="Name" 
-            variant="outlined" 
-            onChange={(e) => setName(e.target.value)} 
+          <TextField
+            label="Name"
+            variant="outlined"
+            onChange={(e) => setName(e.target.value)}
           />
-          <TextField 
-            label="Description" 
-            variant="outlined" 
+          <TextField
+            label="Description"
+            variant="outlined"
             onChange={(e) => setDescription(e.target.value)}
           />
           <Button variant="outlined" component="label">
@@ -81,16 +81,13 @@ const Dashboard = () => {
               onChange={handleThumbnail}
             />
           </Button>
-          <Button 
-            type="submit"
-            variant="contained"
-            onClick={handleCreate}>
-              Create
+          <Button type="submit" variant="contained" onClick={handleCreate}>
+            Create
           </Button>
         </Box>
       </Modal>
     </main>
   );
 };
- 
+
 export default Dashboard;
