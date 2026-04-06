@@ -53,15 +53,7 @@ export const apiStorePresentation = async (presentation) => {
   const token = localStorage.getItem("token");
 
   // Get current store
-  const res = await fetch(`${URL}/store`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  const data = await res.json();
+  const data = await apiFetchStore();
 
   const store = data.store || {};
   const presentations = store.presentations || [];
@@ -70,15 +62,17 @@ export const apiStorePresentation = async (presentation) => {
 
   await fetch(`${URL}/store`, {
     method: "PUT",
-    headers: {
+    headers: { 
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      "Authorization": `Bearer ${token}`,
     },
-    body: JSON.stringify({
+    body: JSON.stringify({ 
       store: {
         ...store,
         presentations,
       },
     }),
   });
+
+  return presentations;
 };
