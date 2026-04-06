@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Box, TextField, Button } from '@mui/material';
 import { useState } from 'react';
 import { apiLogin } from '../api'
@@ -6,11 +7,15 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const navigate = useNavigate();
+
   const userLogin = async () => {
     try {
-      const data = await apiLogin(email, password)
+      const token = await apiLogin(email, password);
+      localStorage.setItem("token", token);
+      navigate("/dashboard");
     } catch (err) {
-      console.log(err)
+      console.log(err);
     }
   }
 

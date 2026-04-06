@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Box, TextField, Button } from '@mui/material';
 import { useState } from 'react';
 import { apiRegister } from '../api'
@@ -8,9 +9,13 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  const navigate = useNavigate();
+
   const userRegister = async () => {
     try {
-      const data = await apiRegister(name, email, password, confirmPassword)
+      const token = await apiRegister(name, email, password, confirmPassword);
+      localStorage.setItem("token", token);
+      navigate("/dashboard");
     } catch (err) {
       console.log(err)
     }
