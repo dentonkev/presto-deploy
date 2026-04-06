@@ -81,3 +81,35 @@ export const apiStorePresentation = async (presentation) => {
 
   return presentations;
 };
+
+export const apiDeletePresentation = async (pid) => {
+  const token = localStorage.getItem("token");
+
+  const dataStore = await apiFetchStore();
+
+  const store = dataStore.store || {};
+  const oldPresentations = store.presentations || [];
+
+  const filteredPresentations = oldPresentations.filter(p => p.id !== pid);
+
+  const res = await fetch(`${URL}/store`, {
+    method: "PUT",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+    body: JSON.stringify({ 
+      store: {
+        ...store,
+        presentations: filteredPresentations,
+      },
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error);
+  }
+
+  return filteredPresentations;
+};

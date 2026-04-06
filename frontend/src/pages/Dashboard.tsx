@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { Button, Modal, Box, TextField, Card } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -23,6 +24,7 @@ const Dashboard = () => {
   const showError = useContext(ErrorContext);
 
   const isMobile = useMediaQuery("(max-width:700px)");
+  const navigate = useNavigate();
 
   const handleOpen = () => {
     setOpen(true);
@@ -124,7 +126,11 @@ const Dashboard = () => {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {presentations.map((p) => (
-            <Card key={p.id} className="aspect-[2/1] min-w-[100px] flex overflow-hidden">
+            <Card 
+              key={p.id}
+              className="aspect-[2/1] min-w-[100px] flex overflow-hidden cursor-pointer"
+              onClick={() => navigate(`/presentation/${p.id}`)}
+            >
               {/* Thumbail */}
               <div className="w-1/3 h-full bg-gray-300 flex-shrink-0">
                 {p.thumbnail && (
