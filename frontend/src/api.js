@@ -10,12 +10,12 @@ export const apiLogin = async (email, password) => {
   });
   const data = await res.json();
   if (!res.ok) {
-    throw new Error(data.message);
+    throw new Error(data.error);
   }
   return data.token;
 };
 
-export const apiRegister = async (name, email, password, confirmPassword) => {
+export const apiRegister = async (name, email, password) => {
   const res = await fetch(`${URL}/admin/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -23,7 +23,7 @@ export const apiRegister = async (name, email, password, confirmPassword) => {
   });
   const data = await res.json();
   if (!res.ok) {
-    throw new Error(data.message);
+    throw new Error(data.error);
   }
   return data.token;
 };
@@ -34,9 +34,9 @@ export const apiStorePresentation = async (presentation) => {
   // Get current store
   const res = await fetch(`${URL}/store`, {
     method: "GET",
-    headers: { 
+    headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     },
   });
 
@@ -45,19 +45,19 @@ export const apiStorePresentation = async (presentation) => {
   const store = data.store || {};
   const presentations = store.presentations || [];
 
-  presentations.push(presentation)
+  presentations.push(presentation);
 
   await fetch(`${URL}/store`, {
     method: "PUT",
-    headers: { 
+    headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ 
+    body: JSON.stringify({
       store: {
         ...store,
-        presentations
-      }
+        presentations,
+      },
     }),
   });
 };
