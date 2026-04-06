@@ -27,3 +27,37 @@ export const apiRegister = async (name, email, password, confirmPassword) => {
   }
   return data.token;
 };
+
+export const apiStorePresentation = async (presentation) => {
+  const token = localStorage.getItem("token");
+
+  // Get current store
+  const res = await fetch(`${URL}/store`, {
+    method: "GET",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+  });
+
+  const data = await res.json();
+
+  const store = data.store || {};
+  const presentations = store.presentations || [];
+
+  presentations.push(presentation)
+
+  await fetch(`${URL}/store`, {
+    method: "PUT",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ 
+      store: {
+        ...store,
+        presentations
+      }
+    }),
+  });
+};
