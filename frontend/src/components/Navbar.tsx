@@ -25,7 +25,7 @@ const Navbar = () => {
   const handleLogo = () => navigate("/dashboard");
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box>
       <AppBar position="static" sx={{ backgroundColor: "#252427" }}>
         <Toolbar>
           <Box
