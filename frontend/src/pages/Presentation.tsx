@@ -1,10 +1,11 @@
 import { useNavigate, useParams } from "react-router-dom"
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
-import { FaArrowLeft, FaTrashAlt } from "react-icons/fa";
-import { useState, Fragment, useEffect, useContext } from "react";
+import { FaArrowLeft, FaTrashAlt, FaAngleLeft, FaAngleRight } from "react-icons/fa";
+import { useState, Fragment, useEffect, useContext} from "react";
 import { MdDelete } from "react-icons/md";
-import { apiDeletePresentation, apiFetchStore } from "../api";
+import { apiDeletePresentation, apiFetchStore, apiUpdatePresentation } from "../api";
 import ErrorContext from "../context/ErrorContext";
+import { v4 as uuidv4 } from "uuid";
 
 export interface SimpleDialogProps {
   open: boolean;
@@ -58,9 +59,10 @@ const DeleteDialog = (props: SimpleDialogProps) => {
 const Presentation = () => {
   const [open, setOpen] = useState(false);
   const [slides, setSlides] = useState<Slide[]>([]);
-
+  const [currentSlide, setCurrentSlide] = useState(0)
   const { id } = useParams();
   const navigate = useNavigate();
+  const showError = useContext(ErrorContext);
 
   useEffect(() => {
     const loadSlides = async () => {
@@ -72,10 +74,36 @@ const Presentation = () => {
     loadSlides();
   }, [id]);
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowRight' && slides.length > 1 && currentSlide !== (slides.length - 1)) {
+        setCurrentSlide(currentSlide + 1)
+      } else if (event.key === 'ArrowLeft' && slides.length > 1 && currentSlide !== 0) {
+        setCurrentSlide(currentSlide - 1)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [currentSlide, slides.length]);
+
+  const handleCreateSlide = async () => {
+    const newSlide = uuidv4();
+    const newSlides = [...slides, { id: newSlide }];
+    try {
+      await apiUpdatePresentation(id, newSlides);
+      setSlides(newSlides)
+      setCurrentSlide(newSlides.length - 1)
+    } catch (err: any) {
+      showError(err.message);
+    }
+  }
+
   return (
     <>
       <section className="flex h-screen">
-        <div className="flex flex-col justify-between p-3.5 bg-black h-full border-r border-solid border-[#323232]">
+        <div className="fixed flex flex-col justify-between p-3.5 bg-black h-full border-r border-solid border-[#323232]">
           <button onClick={() => navigate("/dashboard")} aria-label="Go to Dashboard" className="cursor-pointer">
             <FaArrowLeft className="text-gray-400 hover:text-red-500"/>
           </button>
@@ -94,12 +122,38 @@ const Presentation = () => {
           {slides.length === 0 ? (
             <p>No slides available</p>
           ) : (
-            <div className="w-[800px] h-[450px] bg-white flex items-center justify-center border border-dotted border-gray-300">
-              <p>Slide: {slides[0].id}</p>
+            <div key={slides[currentSlide].id} className="relative min-w-[800px] min-h-[450px] bg-white flex items-center justify-center border border-dotted border-gray-300">
+              <p>Slide {slides[currentSlide].id}</p>
+              <p className="absolute bottom-2 left-2 text-sm text-gray-500">
+                {currentSlide + 1}
+              </p>
             </div>
           )}
-        </div>
+        </div>      
       </section>
+      <Button
+        variant="contained"
+        onClick={handleCreateSlide}
+        sx = {{
+          position: "fixed",
+          bottom: "10%",
+          left: "47%"
+        }}
+      >
+          New Slide
+      </Button>
+      {slides.length > 1 && currentSlide !== 0 ? (
+        <Button onClick={() => setCurrentSlide(currentSlide - 1)} aria-label="Left Slide" className="cursor-pointer" >
+          <FaAngleLeft className="fixed bottom-10 right-25 w-12 h-12 text-[#1875d2]"/>
+        </Button> ) : null
+      }
+
+      {slides.length > 1 && currentSlide !== (slides.length - 1) ? (
+        <Button onClick={() => setCurrentSlide(currentSlide + 1)} aria-label="Right Slide" className="cursor-pointer" >
+          <FaAngleRight className="fixed bottom-10 right-10 w-12 h-12 text-[#1875d2]"/>
+        </Button> ) : null
+      }
+
       <DeleteDialog
         open={open}
         selectedValue=""
