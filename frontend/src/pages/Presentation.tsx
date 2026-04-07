@@ -1,14 +1,15 @@
 import { useNavigate, useParams } from "react-router-dom"
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import { FaArrowLeft, FaTrashAlt } from "react-icons/fa";
-import { useState, Fragment, useEffect } from "react";
+import { useState, Fragment, useEffect, useContext } from "react";
 import { MdDelete } from "react-icons/md";
 import { apiDeletePresentation, apiFetchStore } from "../api";
+import ErrorContext from "../context/ErrorContext";
 
 export interface SimpleDialogProps {
   open: boolean;
   selectedValue: string;
-  onClose: (value: string) => void;
+  onClose: (_value: string) => void;
 };
 
 type Slide = {
@@ -17,7 +18,8 @@ type Slide = {
 
 const DeleteDialog = (props: SimpleDialogProps) => {
   const { id } = useParams();
-  const { onClose, selectedValue, open } = props;
+  const { selectedValue, open, onClose } = props;
+  const showError = useContext(ErrorContext);
 
   const handleClose = () => {
     onClose(selectedValue);
@@ -26,10 +28,13 @@ const DeleteDialog = (props: SimpleDialogProps) => {
   const navigate = useNavigate();
 
   const handleDelete = async () => {
-    await apiDeletePresentation(id);
-    navigate("/dashboard");
-
-    onClose(selectedValue);
+    try {
+      await apiDeletePresentation(id);
+      navigate("/dashboard");
+      onClose(selectedValue);
+    } catch (err: any) {
+      showError(err);
+    }
   }
 
   return (
