@@ -15,8 +15,10 @@ const Login = () => {
       const token = await apiLogin(email, password);
       localStorage.setItem("token", token);
       navigate("/dashboard");
-    } catch (err: any) {
-      showError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        showError(err.message); 
+      }
     }
   };
 
