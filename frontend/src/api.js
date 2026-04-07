@@ -32,13 +32,31 @@ export const apiRegister = async (name, email, password) => {
   return data.token;
 };
 
+export const apiLogout = async () => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${URL}/admin/auth/logout`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error);
+  }
+
+  localStorage.removeItem("token");
+};
+
 export const apiFetchStore = async () => {
   const token = localStorage.getItem("token");
 
   const res = await fetch(`${URL}/store`, {
     headers: {
-      "Authorization": `Bearer ${token}`,
-    }
+      Authorization: `Bearer ${token}`,
+    },
   });
 
   const data = await res.json();
@@ -62,11 +80,11 @@ export const apiStorePresentation = async (presentation) => {
 
   const res = await fetch(`${URL}/store`, {
     method: "PUT",
-    headers: { 
+    headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ 
+    body: JSON.stringify({
       store: {
         ...store,
         presentations,
@@ -90,15 +108,15 @@ export const apiDeletePresentation = async (pid) => {
   const store = dataStore.store || {};
   const oldPresentations = store.presentations || [];
 
-  const filteredPresentations = oldPresentations.filter(p => p.id !== pid);
+  const filteredPresentations = oldPresentations.filter((p) => p.id !== pid);
 
   const res = await fetch(`${URL}/store`, {
     method: "PUT",
-    headers: { 
+    headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ 
+    body: JSON.stringify({
       store: {
         ...store,
         presentations: filteredPresentations,
