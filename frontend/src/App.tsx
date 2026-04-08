@@ -3,7 +3,7 @@ import Landing from "./pages/Landing.tsx";
 import Login from "./pages/Login.tsx";
 import Register from "./pages/Register.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
-import Presentation from "./pages/Presentation.tsx";
+import Presentations from "./pages/Presentations.tsx";
 import { ErrorProvider } from "./context/ErrorContext.tsx";
 
 const App = () => {
@@ -15,7 +15,7 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/presentation/:id" element={<Presentation />} />
+          <Route path="/presentation/:id" element={<Presentations />} />
         </Routes>
       </ErrorProvider>
     </BrowserRouter>

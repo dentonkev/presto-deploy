@@ -23,8 +23,10 @@ const Register = () => {
       const token = await apiRegister(name, email, password);
       localStorage.setItem("token", token);
       navigate("/dashboard");
-    } catch (err: any) {
-      showError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        showError(err.message); 
+      }
     }
   };
 
