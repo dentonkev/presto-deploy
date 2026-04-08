@@ -131,3 +131,70 @@ export const apiDeletePresentation = async (pid) => {
 
   return filteredPresentations;
 };
+
+export const apiEditTitle = async (pid, name) => {
+  const token = localStorage.getItem("token");
+
+  const dataStore = await apiFetchStore();
+
+  const store = dataStore.store || {};
+  const presentations = store.presentations || [];
+
+  const presentation = presentations.find((p) => p.id === pid);
+  presentation.name = name;
+
+  const res = await fetch(`${URL}/store`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      store: {
+        ...store,
+        presentations,
+      },
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error);
+  }
+
+  return presentations;
+};
+
+export const apiEditPresentation = async (pid, newInfo) => {
+  const token = localStorage.getItem("token");
+
+  const dataStore = await apiFetchStore();
+
+  const store = dataStore.store || {};
+  const presentations = store.presentations || [];
+
+  const presentation = presentations.find((p) => p.id === pid);
+  presentation.description = newInfo.description;
+  presentation.thumbnail = newInfo.thumbnail;
+
+  const res = await fetch(`${URL}/store`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      store: {
+        ...store,
+        presentations,
+      },
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error);
+  }
+
+  return presentations;
+}

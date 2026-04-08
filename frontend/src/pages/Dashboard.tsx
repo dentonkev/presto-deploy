@@ -1,18 +1,24 @@
 import { useNavigate } from "react-router-dom";
 import { Button, Modal, Box, TextField, Card } from "@mui/material";
-import { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { apiFetchStore, apiStorePresentation } from "../api";
 import { useMediaQuery } from "@mui/material";
 import ErrorContext from "../context/ErrorContext";
-import Navbar from "../components/NavBar";
+import Navbar from "../components/Navbar";
 
-type Presentation = {
+export type Presentation = {
   id: string;
   name: string;
   description: string;
   thumbnail: string | ArrayBuffer | null;
   slides: { id: string }[];
+};
+
+type Store = {
+  store: {
+    presentations: Presentation[];
+  };
 };
 
 const Dashboard = () => {
@@ -56,14 +62,16 @@ const Dashboard = () => {
       setDescription("");
       setThumbnail("");
       setOpen(false);
-    } catch (err: any) {
-      showError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        showError(err.message); 
+      }
     }
   };
 
   // Converts the file uploaded into readable string of data
-  const handleThumbnail = (e: any) => {
-    const file = e.target.files[0];
+  const handleThumbnail = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
@@ -75,11 +83,13 @@ const Dashboard = () => {
 
   useEffect(() => {
     apiFetchStore()
-      .then((data: any) => {
+      .then((data: Store) => {
         setPresentations(data.store?.presentations || []);
       })
-      .catch((err: any) => {
-        showError(err.message);
+      .catch((err: unknown) => {
+        if (err instanceof Error) {
+          showError(err.message); 
+        }
       });
   }, []);
 
