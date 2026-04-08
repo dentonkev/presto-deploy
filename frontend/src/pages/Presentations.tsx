@@ -98,6 +98,49 @@ const Presentations = () => {
     setOpenSettings(false);
   };
 
+  const handleCreateSlide = async () => {
+    const newSlide = uuidv4();
+    const newSlides = [...slides, { id: newSlide }];
+    try {
+      await apiUpdatePresentation(id, newSlides);
+      setSlides(newSlides)
+      setCurrentSlide(newSlides.length - 1)
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        showError(err.message); 
+      }
+    }
+  }
+
+  useEffect(() => {
+    const loadSlides = async () => {
+      const data = await apiFetchStore();
+      const presentation = data.store.presentations.find(
+        (p: Presentation) => p.id === id
+      );
+      setSlides(presentation?.slides || []);
+      setName(presentation?.name || ""); 
+      setNewName(presentation?.name || ""); 
+      setDescription(presentation?.description || "");
+      setThumbnail(presentation?.thumbnail || "");
+    }
+    loadSlides();
+  }, [id]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowRight' && slides.length > 1 && currentSlide !== (slides.length - 1)) {
+        setCurrentSlide(currentSlide + 1)
+      } else if (event.key === 'ArrowLeft' && slides.length > 1 && currentSlide !== 0) {
+        setCurrentSlide(currentSlide - 1)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [currentSlide, slides.length]);
+
   return (
     <>
       <section className="flex flex-col h-screen w-screen overflow-hidden">
@@ -180,7 +223,43 @@ const Presentations = () => {
             )}
           </div>
         </div>
+        {slides.length > 1 ? (
+          <div className="z-50 fixed bottom-2 right-10">
+            <button
+              onClick={() => setCurrentSlide(currentSlide - 1)}
+              aria-label="Left Slide"
+              disabled={currentSlide === 0}
+              className={currentSlide === 0 ? "cursor-not-allowed opacity-30" : "cursor-pointer"}
+            >
+              <FaAngleLeft className="h-12 w-12 text-[#1875d2]" />
+            </button>
+            <button
+              onClick={() => setCurrentSlide(currentSlide + 1)}
+              aria-label="Right Slide"
+              disabled={currentSlide === slides.length - 1}
+              className={
+                currentSlide === slides.length - 1
+                  ? "cursor-not-allowed opacity-30"
+                  : "cursor-pointer"
+              }
+            >
+              <FaAngleRight className="h-12 w-12 text-[#1875d2]" />
+            </button>
+          </div>
+        ) : null}
       </section>
+      <Button
+        variant="contained"
+        onClick={handleCreateSlide}
+        sx = {{
+          position: "fixed",
+          bottom: "2%",
+          left: "50%",
+          transform: "translateX(-50%)"
+        }}
+      >
+          New Slide
+      </Button>
       <DeleteDialog open={openDelete} selectedValue="" onClose={() => setOpenDelete(false)}/>
       {/* Editing title */}
       <Modal onClose={() => setOpenTitle(false)} open={openTitle}>
