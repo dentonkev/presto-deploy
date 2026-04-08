@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Box, TextField, Button, Typography } from "@mui/material";
-import { useContext, useState, type FormEvent } from "react";
+import { useContext, useState, type SubmitEvent } from "react";
 import { apiRegister } from "../api";
 import ErrorContext from "../context/ErrorContext";
 
@@ -30,7 +30,7 @@ const Register = () => {
     }
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = (e: SubmitEvent) => {
     e.preventDefault();
     handleRegister();
   };

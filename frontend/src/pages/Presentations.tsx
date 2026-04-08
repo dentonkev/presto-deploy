@@ -1,10 +1,12 @@
 import { useNavigate, useParams } from "react-router-dom"
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Modal, TextField } from "@mui/material";
-import { FaArrowLeft, FaTrashAlt, FaEdit } from "react-icons/fa";
-import React, { useState, Fragment, useEffect } from "react";
+import { FaArrowLeft, FaTrashAlt, FaEdit, FaAngleLeft, FaAngleRight } from "react-icons/fa";
+import React, { useState, Fragment, useEffect, useContext } from "react";
 import { MdDelete, MdSettings } from "react-icons/md";
-import { apiDeletePresentation, apiEditPresentation, apiEditTitle, apiFetchStore } from "../api";
+import { apiDeletePresentation, apiEditPresentation, apiEditTitle, apiFetchStore, apiUpdatePresentation } from "../api";
 import type { Presentation } from "./Dashboard";
+import ErrorContext from "../context/ErrorContext";
+import { v4 as uuidv4 } from "uuid";
 
 export interface SimpleDialogProps {
   open: boolean;
@@ -19,6 +21,7 @@ type Slide = {
 const DeleteDialog = (props: SimpleDialogProps) => {
   const { id } = useParams();
   const { onClose, selectedValue, open } = props;
+  const showError = useContext(ErrorContext);
 
   const handleClose = () => {
     onClose(selectedValue);
@@ -27,9 +30,15 @@ const DeleteDialog = (props: SimpleDialogProps) => {
   const navigate = useNavigate();
 
   const handleDelete = async () => {
-    await apiDeletePresentation(id);
-    navigate("/dashboard");
-    onClose(selectedValue);
+    try {
+      await apiDeletePresentation(id);
+      navigate("/dashboard");
+      onClose(selectedValue);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        showError(err.message); 
+      }
+    }
   }
 
   return (
@@ -54,6 +63,7 @@ const Presentations = () => {
   const [openDelete, setOpenDelete] = useState(false);
   const [openTitle, setOpenTitle] = useState(false);
   const [slides, setSlides] = useState<Slide[]>([]);
+  const [currentSlide, setCurrentSlide] = useState(0)
   const [newName, setNewName] = useState("");
   const [name, setName] = useState("");
   const [openSettings, setOpenSettings] = useState(false);
@@ -62,6 +72,7 @@ const Presentations = () => {
 
   const { id } = useParams();
   const navigate = useNavigate();
+  const showError = useContext(ErrorContext);
 
   const handleTitle = async () => {
     await apiEditTitle(id, newName);
@@ -87,6 +98,20 @@ const Presentations = () => {
     setOpenSettings(false);
   };
 
+  const handleCreateSlide = async () => {
+    const newSlide = uuidv4();
+    const newSlides = [...slides, { id: newSlide }];
+    try {
+      await apiUpdatePresentation(id, newSlides);
+      setSlides(newSlides)
+      setCurrentSlide(newSlides.length - 1)
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        showError(err.message); 
+      }
+    }
+  }
+
   useEffect(() => {
     const loadSlides = async () => {
       const data = await apiFetchStore();
@@ -101,6 +126,20 @@ const Presentations = () => {
     }
     loadSlides();
   }, [id]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowRight' && slides.length > 1 && currentSlide !== (slides.length - 1)) {
+        setCurrentSlide(currentSlide + 1)
+      } else if (event.key === 'ArrowLeft' && slides.length > 1 && currentSlide !== 0) {
+        setCurrentSlide(currentSlide - 1)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [currentSlide, slides.length]);
 
   return (
     <>
@@ -175,13 +214,52 @@ const Presentations = () => {
             {slides.length === 0 ? (
               <p>No slides available</p>
             ) : (
-              <div className="w-full max-w-5xl aspect-video bg-white flex items-center justify-center border border-dotted border-gray-300 m-3">
-                <p>Slide: {slides[0].id}</p>
+              <div key={slides[currentSlide].id} className="relative w-full max-w-5xl aspect-video bg-white flex items-center justify-center border border-dotted border-gray-300 m-3">
+                <p>Slide {slides[currentSlide].id}</p>
+                <p className="absolute bottom-2 left-2 text-sm text-gray-500">
+                  {currentSlide + 1}
+                </p>
               </div>
             )}
           </div>
         </div>
+        {slides.length > 1 ? (
+          <div className="z-50 fixed bottom-2 right-10">
+            <button
+              onClick={() => setCurrentSlide(currentSlide - 1)}
+              aria-label="Left Slide"
+              disabled={currentSlide === 0}
+              className={currentSlide === 0 ? "cursor-not-allowed opacity-30" : "cursor-pointer"}
+            >
+              <FaAngleLeft className="h-12 w-12 text-[#1875d2]" />
+            </button>
+            <button
+              onClick={() => setCurrentSlide(currentSlide + 1)}
+              aria-label="Right Slide"
+              disabled={currentSlide === slides.length - 1}
+              className={
+                currentSlide === slides.length - 1
+                  ? "cursor-not-allowed opacity-30"
+                  : "cursor-pointer"
+              }
+            >
+              <FaAngleRight className="h-12 w-12 text-[#1875d2]" />
+            </button>
+          </div>
+        ) : null}
       </section>
+      <Button
+        variant="contained"
+        onClick={handleCreateSlide}
+        sx = {{
+          position: "fixed",
+          bottom: "2%",
+          left: "50%",
+          transform: "translateX(-50%)"
+        }}
+      >
+          New Slide
+      </Button>
       <DeleteDialog open={openDelete} selectedValue="" onClose={() => setOpenDelete(false)}/>
       {/* Editing title */}
       <Modal onClose={() => setOpenTitle(false)} open={openTitle}>
