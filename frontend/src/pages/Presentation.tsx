@@ -102,7 +102,7 @@ const Presentation = () => {
 
   return (
     <>
-      <section className="flex h-screen">
+      <section className="flex h-screen flex-col">
         <div className="fixed flex flex-col justify-between p-3.5 bg-black h-full border-r border-solid border-[#323232]">
           <button onClick={() => navigate("/dashboard")} aria-label="Go to Dashboard" className="cursor-pointer">
             <FaArrowLeft className="text-gray-400 hover:text-red-500"/>
@@ -129,7 +129,33 @@ const Presentation = () => {
               </p>
             </div>
           )}
-        </div>      
+        </div>
+
+        {slides.length > 1 ? (
+          <div className="z-50 flex items-center justify-end px-6 sm:px-12 mb-12">
+            <button
+              onClick={() => setCurrentSlide(currentSlide - 1)}
+              aria-label="Left Slide"
+              disabled={currentSlide === 0}
+              className={currentSlide === 0 ? "cursor-not-allowed opacity-30" : "cursor-pointer"}
+            >
+              <FaAngleLeft className="h-12 w-12 text-[#1875d2]" />
+            </button>
+            <button
+              onClick={() => setCurrentSlide(currentSlide + 1)}
+              aria-label="Right Slide"
+              disabled={currentSlide === slides.length - 1}
+              className={
+                currentSlide === slides.length - 1
+                  ? "cursor-not-allowed opacity-30"
+                  : "cursor-pointer"
+              }
+            >
+              <FaAngleRight className="h-12 w-12 text-[#1875d2]" />
+            </button>
+          </div>
+        ) : null}
+
       </section>
       <Button
         variant="contained"
@@ -137,22 +163,12 @@ const Presentation = () => {
         sx = {{
           position: "fixed",
           bottom: "10%",
-          left: "47%"
+          left: "50%",
+          transform: "translateX(-50%)"
         }}
       >
           New Slide
       </Button>
-      {slides.length > 1 && currentSlide !== 0 ? (
-        <Button onClick={() => setCurrentSlide(currentSlide - 1)} aria-label="Left Slide" className="cursor-pointer" >
-          <FaAngleLeft className="fixed bottom-10 right-25 w-12 h-12 text-[#1875d2]"/>
-        </Button> ) : null
-      }
-
-      {slides.length > 1 && currentSlide !== (slides.length - 1) ? (
-        <Button onClick={() => setCurrentSlide(currentSlide + 1)} aria-label="Right Slide" className="cursor-pointer" >
-          <FaAngleRight className="fixed bottom-10 right-10 w-12 h-12 text-[#1875d2]"/>
-        </Button> ) : null
-      }
 
       <DeleteDialog
         open={open}
