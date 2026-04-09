@@ -1,63 +1,17 @@
 import { useNavigate, useParams } from "react-router-dom"
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Modal, TextField } from "@mui/material";
-import { FaArrowLeft, FaTrashAlt, FaEdit, FaAngleLeft, FaAngleRight } from "react-icons/fa";
-import React, { useState, Fragment, useEffect, useContext } from "react";
-import { MdDelete, MdSettings } from "react-icons/md";
-import { apiDeletePresentation, apiEditPresentation, apiEditTitle, apiFetchStore, apiUpdatePresentation } from "../api";
+import { Box, Button, IconButton, Modal, TextField } from "@mui/material";
+import { FaArrowLeft, FaTrashAlt, FaEdit, FaAngleLeft, FaAngleRight, FaBars } from "react-icons/fa";
+import React, { useState, useEffect, useContext } from "react";
+import { MdSettings, MdOutlineTextFields, MdImage, MdVideocam, MdCode } from "react-icons/md";
+import { apiEditPresentation, apiEditTitle, apiFetchStore, apiUpdatePresentation } from "../api";
 import type { Presentation } from "./Dashboard";
 import ErrorContext from "../context/ErrorContext";
 import { v4 as uuidv4 } from "uuid";
-
-export interface SimpleDialogProps {
-  open: boolean;
-  selectedValue: string;
-  onClose: (_value: string) => void;
-};
+import { DeleteDialog } from "../components/DeleteModal";
 
 type Slide = {
   id: string;
 };
-
-const DeleteDialog = (props: SimpleDialogProps) => {
-  const { id } = useParams();
-  const { onClose, selectedValue, open } = props;
-  const showError = useContext(ErrorContext);
-
-  const handleClose = () => {
-    onClose(selectedValue);
-  };
-
-  const navigate = useNavigate();
-
-  const handleDelete = async () => {
-    try {
-      await apiDeletePresentation(id);
-      navigate("/dashboard");
-      onClose(selectedValue);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        showError(err.message); 
-      }
-    }
-  }
-
-  return (
-    <Fragment>
-      <Dialog onClose={handleClose} open={open} disableRestoreFocus>
-        <DialogTitle>You are deleting the full presentation.</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure?
-          </DialogContentText>
-          <DialogActions>
-            <Button variant="outlined" onClick={handleClose}>No</Button>
-            <Button variant="contained" color="error" onClick={handleDelete} startIcon={<MdDelete />}>Yes</Button>
-          </DialogActions>
-        </DialogContent>
-      </Dialog>
-    </Fragment>
-  );
-}
 
 const Presentations = () => {
   const [openDelete, setOpenDelete] = useState(false);
@@ -67,6 +21,7 @@ const Presentations = () => {
   const [newName, setNewName] = useState("");
   const [name, setName] = useState("");
   const [openSettings, setOpenSettings] = useState(false);
+  const [openTools, setOpenTools] = useState(false);
   const [description, setDescription] = useState("");
   const [thumbnail, setThumbnail] = useState<string | ArrayBuffer | null>(null);
 
@@ -159,9 +114,25 @@ const Presentations = () => {
         <div className="flex h-full relative">
           {/* Side bar */}
           <div className="flex flex-col justify-between p-3.5 bg-black h-full">
-            <button onClick={() => navigate("/dashboard")} aria-label="Go to Dashboard" className="cursor-pointer">
-              <FaArrowLeft className="text-gray-400 hover:text-red-500"/>
-            </button>
+            <div className="flex flex-col gap-5">
+              <button 
+                aria-label="Go to Dashboard"
+                className="cursor-pointer"
+                onClick={() => navigate("/dashboard")}
+              >
+                <FaArrowLeft className="text-gray-400 hover:text-red-500"/>
+              </button>
+              <button
+                aria-label="Tools"
+                className="cursor-pointer"
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  setOpenTools(!openTools);
+                }}
+              >
+                <FaBars className="text-gray-400 hover:text-red-500"/>
+              </button>
+            </div>
             <div className="flex flex-col gap-5">
               <button 
                 aria-label="Settings"
@@ -185,8 +156,40 @@ const Presentations = () => {
               </button>
             </div>
           </div>
+          <div className="flex-1 flex items-center justify-center align-center bg-white">
+            {slides.length === 0 ? (
+              <p>No slides available</p>
+            ) : (
+              <div key={slides[currentSlide].id} className="relative w-full max-w-5xl aspect-video bg-white flex items-center justify-center border border-dotted border-gray-300 m-3">
+                <p>Slide {slides[currentSlide].id}</p>
+                <p className="absolute bottom-2 left-2 text-sm text-gray-500">
+                  {currentSlide + 1}
+                </p>
+              </div>
+            )}
+          </div>
+          {openTools && (
+            <div className="absolute left-11 top-0 flex flex-col h-full w-fit bg-[#1a1a1c] shadow-xl overflow-hidden p-2.5 gap-3 border-l border-solid border-[#323232]">
+              <button className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md">
+                <MdOutlineTextFields size={20} className="text-white"/>
+                Text
+              </button>
+              <button className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md">
+                <MdImage size={20} className="text-white"/>
+                Image
+              </button>
+              <button className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md">
+                <MdVideocam size={20} className="text-white"/>
+                Video
+              </button>
+              <button className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md">
+                <MdCode size={20} className="text-white"/>
+                Code
+              </button>
+            </div>
+          )}
           {openSettings && (
-            <div className="absolute left-11 top-0 flex flex-col h-full w-80 bg-white shadow-xl overflow-hidden">
+            <div className="absolute left-11 top-0 flex flex-col h-full w-80 bg-white shadow-xl overflow-scroll">
               <div className="bg-white h-full">
                 <div className="p-4 font-semibold flex justify-between">
                   Settings
@@ -210,18 +213,6 @@ const Presentations = () => {
               </div>
             </div>
           )}
-          <div className="flex-1 flex items-center justify-center align-center bg-white">
-            {slides.length === 0 ? (
-              <p>No slides available</p>
-            ) : (
-              <div key={slides[currentSlide].id} className="relative w-full max-w-5xl aspect-video bg-white flex items-center justify-center border border-dotted border-gray-300 m-3">
-                <p>Slide {slides[currentSlide].id}</p>
-                <p className="absolute bottom-2 left-2 text-sm text-gray-500">
-                  {currentSlide + 1}
-                </p>
-              </div>
-            )}
-          </div>
         </div>
         {slides.length > 1 ? (
           <div className="z-50 fixed bottom-2 right-10">
