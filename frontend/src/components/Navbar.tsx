@@ -17,8 +17,10 @@ const Navbar = () => {
     try {
       await apiLogout();
       navigate("/");
-    } catch (err: any) {
-      showError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        showError(err.message); 
+      }
     }
   };
 

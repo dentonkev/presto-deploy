@@ -3,7 +3,7 @@ import { Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, D
 import { FaArrowLeft, FaTrashAlt, FaEdit, FaAngleLeft, FaAngleRight } from "react-icons/fa";
 import React, { useState, Fragment, useEffect, useContext } from "react";
 import { MdDelete, MdSettings } from "react-icons/md";
-import { apiDeletePresentation, apiEditPresentation, apiEditTitle, apiFetchStore, apiUpdatePresentation } from "../api";
+import { apiDeletePresentation, apiEditPresentation, apiEditTitle, apiFetchStore, apiUpdatePresentation, apiLogout } from "../api";
 import type { Presentation } from "./Dashboard";
 import ErrorContext from "../context/ErrorContext";
 import { v4 as uuidv4 } from "uuid";
@@ -12,6 +12,9 @@ export interface SimpleDialogProps {
   open: boolean;
   selectedValue: string;
   onClose: (_value: string) => void;
+  title: string,
+  content: string,
+  onDelete: () => Promise<void>
 };
 
 type Slide = {
@@ -19,20 +22,16 @@ type Slide = {
 };
 
 const DeleteDialog = (props: SimpleDialogProps) => {
-  const { id } = useParams();
-  const { onClose, selectedValue, open } = props;
+  const { onClose, selectedValue, open, title, content, onDelete } = props;
   const showError = useContext(ErrorContext);
 
   const handleClose = () => {
     onClose(selectedValue);
   };
 
-  const navigate = useNavigate();
-
   const handleDelete = async () => {
     try {
-      await apiDeletePresentation(id);
-      navigate("/dashboard");
+      await onDelete();
       onClose(selectedValue);
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -44,10 +43,10 @@ const DeleteDialog = (props: SimpleDialogProps) => {
   return (
     <Fragment>
       <Dialog onClose={handleClose} open={open} disableRestoreFocus>
-        <DialogTitle>You are deleting the full presentation.</DialogTitle>
+        <DialogTitle>{title}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure?
+            {content}
           </DialogContentText>
           <DialogActions>
             <Button variant="outlined" onClick={handleClose}>No</Button>
@@ -69,6 +68,7 @@ const Presentations = () => {
   const [openSettings, setOpenSettings] = useState(false);
   const [description, setDescription] = useState("");
   const [thumbnail, setThumbnail] = useState<string | ArrayBuffer | null>(null);
+  const [deleteMode, setDeleteMode] = useState<'presentation' | 'slide' | null>(null);
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -112,6 +112,40 @@ const Presentations = () => {
     }
   }
 
+  const handleDeletePresentation = async () => {
+    await apiDeletePresentation(id);
+    navigate("/dashboard");
+  }
+
+  const handleDeleteSlide = async () => {
+    const newSlides = slides.filter((_, i) => i !== currentSlide);
+
+    if (newSlides.length === 0) {
+      showError("There are one or fewer slides in this presentation, please delete the entire presentation instead.");
+      return;
+    }
+
+    await apiUpdatePresentation(id, newSlides);
+    setSlides(newSlides)
+
+    if (currentSlide > 0) {
+      setCurrentSlide(currentSlide - 1)
+    } else if (newSlides.length > 0) {
+      setCurrentSlide(0)
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      await apiLogout();
+      navigate("/");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        showError(err.message); 
+      }
+    }
+  };
+
   useEffect(() => {
     const loadSlides = async () => {
       const data = await apiFetchStore();
@@ -128,33 +162,38 @@ const Presentations = () => {
   }, [id]);
 
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleArrowKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'ArrowRight' && slides.length > 1 && currentSlide !== (slides.length - 1)) {
         setCurrentSlide(currentSlide + 1)
       } else if (event.key === 'ArrowLeft' && slides.length > 1 && currentSlide !== 0) {
         setCurrentSlide(currentSlide - 1)
       }
     }
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleArrowKeyDown);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', handleArrowKeyDown);
     };
   }, [currentSlide, slides.length]);
 
   return (
     <>
       <section className="flex flex-col h-screen w-screen overflow-hidden">
-        <div className="flex w-full gap-1 bg-[#1a1a1c] p-3.5 border-b border-solid border-[#323232] items-center">
-          <h2 className="text-white font-semibold">{name}</h2> 
-          <IconButton 
-            className="cursor-pointer"
-            onClick={(e) => {
-              e.currentTarget.blur();
-              setOpenTitle(true);
-            }}
-          >
-            <FaEdit color="white" size={15}/>
-          </IconButton>
+        <div className="flex w-full gap-1 bg-[#1a1a1c] p-3.5 border-b border-solid border-[#323232] items-center justify-between">
+          <div className="flex gap-1 items-center">
+            <h2 className="text-white font-semibold">{name}</h2> 
+            <IconButton 
+              className="cursor-pointer"
+              onClick={(e) => {
+                e.currentTarget.blur();
+                setOpenTitle(true);
+              }}
+            >
+              <FaEdit color="white" size={15}/>
+            </IconButton>
+          </div>
+          <Button onClick={handleLogout} variant="text" sx={{ color: "white"}}>
+            Logout
+          </Button>
         </div>
         <div className="flex h-full relative">
           {/* Side bar */}
@@ -178,6 +217,7 @@ const Presentations = () => {
                 className="cursor-pointer"
                 onClick={(e) => {
                   e.currentTarget.blur();
+                  setDeleteMode("presentation");
                   setOpenDelete(true);
                 }}
               >
@@ -222,9 +262,26 @@ const Presentations = () => {
               </div>
             )}
           </div>
+          <div className="flex flex-col justify-between p-3.5 bg-black h-full">
+            <button
+              aria-label="Delete"
+              className="cursor-pointer"
+              onClick={(e) => {
+                e.currentTarget.blur();
+                if (slides.length <= 1) {
+                  showError("There are one or fewer slides in this presentation, please delete the entire presentation instead.")
+                  return;
+                } 
+                setDeleteMode("slide")
+                setOpenDelete(true);
+              }}
+            >
+              <FaTrashAlt className="text-gray-400 hover:text-red-500"/>
+            </button>
+          </div>
         </div>
         {slides.length > 1 ? (
-          <div className="z-50 fixed bottom-2 right-10">
+          <div className="z-50 fixed bottom-2 right-13">
             <button
               onClick={() => setCurrentSlide(currentSlide - 1)}
               aria-label="Left Slide"
@@ -260,8 +317,12 @@ const Presentations = () => {
       >
           New Slide
       </Button>
-      <DeleteDialog open={openDelete} selectedValue="" onClose={() => setOpenDelete(false)}/>
-      {/* Editing title */}
+      <DeleteDialog open={openDelete} selectedValue="" onClose={() => {
+        setDeleteMode(null);
+        setOpenDelete(false);
+      }} title={deleteMode === "presentation" ? "You are deleting the full presentation." : "This slide will be permanently removed."}
+      content={deleteMode === "presentation" ? "Are you sure?" : "Delete this Slide?"}
+      onDelete={deleteMode === "presentation" ? handleDeletePresentation : handleDeleteSlide}/>
       <Modal onClose={() => setOpenTitle(false)} open={openTitle}>
         <Box className="absolute flex flex-col top-1/2 left-1/2 w-96 -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl gap-4">
           <TextField label="Name" variant="outlined" value={newName} onChange={(e) => setNewName(e.target.value)}/>
