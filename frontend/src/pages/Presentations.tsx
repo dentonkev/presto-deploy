@@ -39,8 +39,8 @@ const Presentations = () => {
   // For slide text elements
   const [text, setText] = useState(false);
   const [currElement, setCurrElement] = useState<number | null>(null);
-  const [xSize, setXSize] = useState("0");
-  const [ySize, setYSize] = useState("0");
+  const [xSize, setXSize] = useState("10");
+  const [ySize, setYSize] = useState("10");
   const [content, setContent] = useState("text");
   const [fontSize, setFontSize] = useState<string>("1.5"); // in em
   const [color, setColor] = useState<string>("#000000");
@@ -276,12 +276,17 @@ const Presentations = () => {
                     className="element absolute border border-solid border-gray-100 break-words"
                     style={{width: element.xSize + "%", height: element.ySize + "%"}}
                     onDoubleClick={() => {
+                      const el = slides[currentSlide].elements[index];
+
                       setCurrElement(index);
-                      setXSize(slides[currentSlide].elements[index].xSize);
-                      setYSize(slides[currentSlide].elements[index].ySize);
-                      setContent(slides[currentSlide].elements[index].content);
-                      setFontSize(slides[currentSlide].elements[index].fontSize as string);
-                      setColor(slides[currentSlide].elements[index].color as string);
+                      setXSize(el.xSize);
+                      setYSize(el.ySize);
+                      setContent(el.content);
+                      if (el.type === "text") {
+                        setFontSize(el.fontSize as string);
+                        setColor(el.color as string);
+                      }
+
                       setText(true);
                     }}
                     onContextMenu={(e) => {
@@ -307,8 +312,8 @@ const Presentations = () => {
                 onClick={(e) => {
                   e.currentTarget.blur();
                   setCurrElement(null);
-                  setXSize("0");
-                  setYSize("0");
+                  setXSize("10");
+                  setYSize("10");
                   setContent("text");
                   setFontSize("1.5");
                   setColor("#000000");
