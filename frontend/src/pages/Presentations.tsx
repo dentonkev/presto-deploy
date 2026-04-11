@@ -234,7 +234,7 @@ const Presentations = () => {
                 {slides[currentSlide].elements?.map((element: SlideElements, index) => (
                   <div
                     key={index}
-                    className="element absolute border border-solid border-gray-100"
+                    className="element absolute border border-solid border-gray-100 break-words"
                     style={{width: element.xSize + "%", height: element.ySize + "%"}}
                     onDoubleClick={() => {
                       setCurrElement(index);
