@@ -1,62 +1,27 @@
 import { useNavigate, useParams } from "react-router-dom"
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Modal, TextField } from "@mui/material";
-import { FaArrowLeft, FaTrashAlt, FaEdit, FaAngleLeft, FaAngleRight } from "react-icons/fa";
-import React, { useState, Fragment, useEffect, useContext } from "react";
-import { MdDelete, MdSettings } from "react-icons/md";
-import { apiDeletePresentation, apiEditPresentation, apiEditTitle, apiFetchStore, apiUpdatePresentation, apiLogout } from "../api";
+import { Box, Button, IconButton, Modal, TextField } from "@mui/material";
+import { FaArrowLeft, FaTrashAlt, FaEdit, FaAngleLeft, FaAngleRight, FaBars } from "react-icons/fa";
+import React, { useState, useEffect, useContext } from "react";
+import { MdSettings, MdOutlineTextFields, MdImage, MdVideocam, MdCode } from "react-icons/md";
+import { apiDeletePresentation, apiAddText, apiDeleteElement, apiEditPresentation, apiEditTitle, apiFetchStore, apiUpdatePresentation, apiLogout } from "../api";
 import type { Presentation } from "./Dashboard";
 import ErrorContext from "../context/ErrorContext";
 import { v4 as uuidv4 } from "uuid";
+import { DeleteDialog } from "../components/DeleteModal";
 
-export interface SimpleDialogProps {
-  open: boolean;
-  selectedValue: string;
-  onClose: (_value: string) => void;
-  title: string,
-  content: string,
-  onDelete: () => Promise<void>
-};
+type SlideElements = {
+  xSize: string;
+  ySize: string;
+  content: string;
+  fontSize?: string;
+  color?: string;
+  type: string;
+}
 
 type Slide = {
   id: string;
+  elements: SlideElements[];
 };
-
-const DeleteDialog = (props: SimpleDialogProps) => {
-  const { onClose, selectedValue, open, title, content, onDelete } = props;
-  const showError = useContext(ErrorContext);
-
-  const handleClose = () => {
-    onClose(selectedValue);
-  };
-
-  const handleDelete = async () => {
-    try {
-      await onDelete();
-      onClose(selectedValue);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        showError(err.message); 
-      }
-    }
-  }
-
-  return (
-    <Fragment>
-      <Dialog onClose={handleClose} open={open} disableRestoreFocus>
-        <DialogTitle>{title}</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            {content}
-          </DialogContentText>
-          <DialogActions>
-            <Button variant="outlined" onClick={handleClose}>No</Button>
-            <Button variant="contained" color="error" onClick={handleDelete} startIcon={<MdDelete />}>Yes</Button>
-          </DialogActions>
-        </DialogContent>
-      </Dialog>
-    </Fragment>
-  );
-}
 
 const Presentations = () => {
   const [openDelete, setOpenDelete] = useState(false);
@@ -66,9 +31,19 @@ const Presentations = () => {
   const [newName, setNewName] = useState("");
   const [name, setName] = useState("");
   const [openSettings, setOpenSettings] = useState(false);
+  const [openTools, setOpenTools] = useState(false);
   const [description, setDescription] = useState("");
   const [thumbnail, setThumbnail] = useState<string | ArrayBuffer | null>(null);
   const [deleteMode, setDeleteMode] = useState<'presentation' | 'slide' | null>(null);
+
+  // For slide text elements
+  const [text, setText] = useState(false);
+  const [currElement, setCurrElement] = useState<number | null>(null);
+  const [xSize, setXSize] = useState("10");
+  const [ySize, setYSize] = useState("10");
+  const [content, setContent] = useState("text");
+  const [fontSize, setFontSize] = useState<string>("1.5"); // in em
+  const [color, setColor] = useState<string>("#000000");
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -100,17 +75,65 @@ const Presentations = () => {
 
   const handleCreateSlide = async () => {
     const newSlide = uuidv4();
-    const newSlides = [...slides, { id: newSlide }];
+    const newSlides = [...slides, { id: newSlide, elements: [] }];
     try {
       await apiUpdatePresentation(id, newSlides);
-      setSlides(newSlides)
-      setCurrentSlide(newSlides.length - 1)
+      setSlides(newSlides);
+      setCurrentSlide(newSlides.length - 1);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        showError(err.message);
+      }
+    }
+  }
+
+  const handleCreateText = async () => {
+    try {
+      const newElement = {xSize, ySize, content, fontSize, color, type: "text"};
+      setSlides(prev => {
+        const updated = [...prev];
+        const slide = {...updated[currentSlide]};
+
+        if (currElement === null) {
+          slide.elements = [...slide.elements || [], newElement]
+        } else {
+          slide.elements[currElement] = newElement;
+        }
+        
+        updated[currentSlide] = slide;
+        return updated;
+      });
+
+      await apiAddText(id, slides[currentSlide], newElement, currElement);
+      setText(false);
     } catch (err: unknown) {
       if (err instanceof Error) {
         showError(err.message); 
       }
     }
   }
+
+  const handleDeleteElement = async (index: number) => {
+    try {
+      setSlides(prev => {
+        const updated = [...prev];
+        const slide = {...updated[currentSlide]};
+
+        const elements = [...slide.elements];
+        elements.splice(index, 1); 
+        
+        slide.elements = elements;
+        updated[currentSlide] = slide;
+
+        return updated;
+      });
+      await apiDeleteElement(id, slides[currentSlide], index);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        showError(err.message); 
+      }
+    }
+  };
 
   const handleDeletePresentation = async () => {
     await apiDeletePresentation(id);
@@ -126,12 +149,12 @@ const Presentations = () => {
     }
 
     await apiUpdatePresentation(id, newSlides);
-    setSlides(newSlides)
+    setSlides(newSlides);
 
     if (currentSlide > 0) {
       setCurrentSlide(currentSlide - 1)
     } else if (newSlides.length > 0) {
-      setCurrentSlide(0)
+      setCurrentSlide(0);
     }
   }
 
@@ -163,15 +186,15 @@ const Presentations = () => {
 
   useEffect(() => {
     const handleArrowKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'ArrowRight' && slides.length > 1 && currentSlide !== (slides.length - 1)) {
+      if (event.key === "ArrowRight" && slides.length > 1 && currentSlide !== (slides.length - 1)) {
         setCurrentSlide(currentSlide + 1)
-      } else if (event.key === 'ArrowLeft' && slides.length > 1 && currentSlide !== 0) {
+      } else if (event.key === "ArrowLeft" && slides.length > 1 && currentSlide !== 0) {
         setCurrentSlide(currentSlide - 1)
       }
     }
-    window.addEventListener('keydown', handleArrowKeyDown);
+    window.addEventListener("keydown", handleArrowKeyDown);
     return () => {
-      window.removeEventListener('keydown', handleArrowKeyDown);
+      window.removeEventListener("keydown", handleArrowKeyDown);
     };
   }, [currentSlide, slides.length]);
 
@@ -198,9 +221,25 @@ const Presentations = () => {
         <div className="flex h-full relative">
           {/* Side bar */}
           <div className="flex flex-col justify-between p-3.5 bg-black h-full">
-            <button onClick={() => navigate("/dashboard")} aria-label="Go to Dashboard" className="cursor-pointer">
-              <FaArrowLeft className="text-gray-400 hover:text-red-500"/>
-            </button>
+            <div className="flex flex-col gap-5">
+              <button 
+                aria-label="Go to Dashboard"
+                className="cursor-pointer"
+                onClick={() => navigate("/dashboard")}
+              >
+                <FaArrowLeft className="text-gray-400 hover:text-red-500"/>
+              </button>
+              <button
+                aria-label="Tools"
+                className="cursor-pointer"
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  setOpenTools(!openTools);
+                }}
+              >
+                <FaBars className="text-gray-400 hover:text-red-500"/>
+              </button>
+            </div>
             <div className="flex flex-col gap-5">
               <button 
                 aria-label="Settings"
@@ -225,8 +264,81 @@ const Presentations = () => {
               </button>
             </div>
           </div>
+          <div className="flex-1 flex items-center justify-center align-center bg-white">
+            {slides.length === 0 ? (
+              <p>No slides available</p>
+            ) : (
+              <div key={slides[currentSlide].id} className="relative w-full max-w-5xl aspect-video bg-white flex border border-dotted border-gray-300 m-3">
+                {/* 2.3 Adding elements to slides */}
+                {slides[currentSlide].elements?.map((element: SlideElements, index) => (
+                  <div
+                    key={index}
+                    className="element absolute border border-solid border-gray-100 break-words"
+                    style={{width: element.xSize + "%", height: element.ySize + "%"}}
+                    onDoubleClick={() => {
+                      const el = slides[currentSlide].elements[index];
+
+                      setCurrElement(index);
+                      setXSize(el.xSize);
+                      setYSize(el.ySize);
+                      setContent(el.content);
+                      
+                      if (el.type === "text") {
+                        setFontSize(el.fontSize as string);
+                        setColor(el.color as string);
+                        setText(true);
+                      }
+                    }}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      handleDeleteElement(index);
+                    }}
+                  >
+                    <p style={{ color: element.color, fontSize: element.fontSize + "em"}}>
+                      {element.content}
+                    </p>
+                  </div>
+                ))}
+                <p className="absolute bottom-2 left-2 text-sm text-gray-500">
+                  {currentSlide + 1}
+                </p>
+              </div>
+            )}
+          </div>
+          {openTools && (
+            <div className="absolute left-11 top-0 flex flex-col h-full w-fit bg-[#1a1a1c] shadow-xl overflow-hidden p-2.5 gap-3 border-l border-solid border-[#323232]">
+              <button 
+                className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md"
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  setCurrElement(null);
+                  setXSize("10");
+                  setYSize("10");
+                  setContent("text");
+                  setFontSize("1.5");
+                  setColor("#000000");
+                  setText(true);
+                }}
+              >
+                <MdOutlineTextFields size={20} className="text-white"/>
+                Text
+              </button>
+              <button className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md">
+                <MdImage size={20} className="text-white"/>
+                Image
+              </button>
+              <button className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md">
+                <MdVideocam size={20} className="text-white"/>
+                Video
+              </button>
+              <button className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md">
+                <MdCode size={20} className="text-white"/>
+                Code
+              </button>
+            </div>
+          )}
           {openSettings && (
-            <div className="absolute left-11 top-0 flex flex-col h-full w-80 bg-white shadow-xl overflow-hidden">
+            <div className="absolute left-11 top-0 flex flex-col h-full w-80 bg-white shadow-xl overflow-scroll">
               <div className="bg-white h-full">
                 <div className="p-4 font-semibold flex justify-between">
                   Settings
@@ -250,18 +362,6 @@ const Presentations = () => {
               </div>
             </div>
           )}
-          <div className="flex-1 flex items-center justify-center align-center bg-white">
-            {slides.length === 0 ? (
-              <p>No slides available</p>
-            ) : (
-              <div key={slides[currentSlide].id} className="relative w-full max-w-5xl aspect-video bg-white flex items-center justify-center border border-dotted border-gray-300 m-3">
-                <p>Slide {slides[currentSlide].id}</p>
-                <p className="absolute bottom-2 left-2 text-sm text-gray-500">
-                  {currentSlide + 1}
-                </p>
-              </div>
-            )}
-          </div>
           <div className="flex flex-col justify-between p-3.5 bg-black h-full">
             <button
               aria-label="Delete"
@@ -328,6 +428,33 @@ const Presentations = () => {
           <TextField label="Name" variant="outlined" value={newName} onChange={(e) => setNewName(e.target.value)}/>
           <Button type="submit" variant="contained" onClick={handleTitle}>
             Finish
+          </Button>
+        </Box>
+      </Modal>
+      <Modal onClose={() => setText(false)} open={text}>
+        <Box className="absolute flex flex-col top-1/2 left-1/2 w-fit -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl gap-4">
+          <label className="text-gray-500 flex flex-col">
+            xSize (%)
+            <input type="number" min={0} max={100} className="text-black border border-[#cecece] rounded-sm p-2" value={xSize} onChange={(e) => setXSize(e.target.value)}></input>
+          </label>
+          <label className="text-gray-500 flex flex-col">
+            ySize (%)
+            <input type="number" min={0} max={100} className="text-black border border-[#cecece] rounded-sm p-2" value={ySize} onChange={(e) => setYSize(e.target.value)}></input>
+          </label>
+          <TextField label="Text" variant="outlined" value={content} onChange={(e) => setContent(e.target.value)}></TextField>
+          <TextField label="Font Size" type="number" variant="outlined" value={fontSize} onChange={(e) => setFontSize(e.target.value)}></TextField>
+          <label className="text-gray-500 flex flex-col">
+            Text Colour
+            <input type="color" value={color} onChange={(e) => setColor(e.target.value)}></input>
+          </label>
+          <Button 
+            size="small" 
+            className="self-end" 
+            onClick={() => {
+              handleCreateText();
+            }}
+          >
+            Add text
           </Button>
         </Box>
       </Modal>

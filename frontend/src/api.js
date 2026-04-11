@@ -230,3 +230,80 @@ export const apiEditPresentation = async (pid, newInfo) => {
 
   return presentations;
 }
+
+export const apiAddText = async (pid, currSlide, textInfo, currElement) => {
+  const token = localStorage.getItem("token");
+
+  const dataStore = await apiFetchStore();
+
+  const store = dataStore.store || {};
+  const presentations = store.presentations || [];
+
+  const presentation = presentations.find((p) => p.id === pid);
+  const slide = presentation.slides.find((s) => s.id === currSlide.id);
+
+  if (currElement === null) {
+    slide.elements.push(textInfo);
+  } else {
+    slide.elements[currElement] = textInfo;
+  }
+
+  const res = await fetch(`${URL}/store`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      store: {
+        ...store,
+        presentations,
+      },
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error);
+  }
+
+  return presentations;
+}
+
+export const apiDeleteElement = async (pid, currSlide, currElement) => {
+  const token = localStorage.getItem("token");
+
+  const dataStore = await apiFetchStore();
+
+  const store = dataStore.store || {};
+  const presentations = store.presentations || [];
+
+  const presentation = presentations.find((p) => p.id === pid);
+  const slide = presentation.slides.find((s) => s.id === currSlide.id);
+
+  const elements = [...slide.elements];
+  elements.splice(currElement, 1); 
+  
+  slide.elements = elements;
+
+  const res = await fetch(`${URL}/store`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      store: {
+        ...store,
+        presentations,
+      },
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error);
+  }
+
+  return presentations;
+}

@@ -51,6 +51,7 @@ const Dashboard = () => {
         slides: [
           {
             id: uuidv4(),
+            elements: [],
           },
         ],
       };
