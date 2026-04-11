@@ -282,12 +282,12 @@ const Presentations = () => {
                       setXSize(el.xSize);
                       setYSize(el.ySize);
                       setContent(el.content);
+                      
                       if (el.type === "text") {
                         setFontSize(el.fontSize as string);
                         setColor(el.color as string);
+                        setText(true);
                       }
-
-                      setText(true);
                     }}
                     onContextMenu={(e) => {
                       e.preventDefault();
