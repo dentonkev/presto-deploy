@@ -1,26 +1,27 @@
 import { useNavigate, useParams } from "react-router-dom"
-import { Box, Button, IconButton, Modal, TextField } from "@mui/material";
+import { Box, Button, FormControl, IconButton, MenuItem, Modal, Select, TextField } from "@mui/material";
 import { FaArrowLeft, FaTrashAlt, FaEdit, FaAngleLeft, FaAngleRight, FaBars } from "react-icons/fa";
 import React, { useState, useEffect, useContext } from "react";
 import { MdSettings, MdOutlineTextFields, MdImage, MdVideocam, MdCode } from "react-icons/md";
-import { apiDeletePresentation, apiAddText, apiDeleteElement, apiEditPresentation, apiEditTitle, apiFetchStore, apiUpdatePresentation, apiLogout } from "../api";
+import { apiDeletePresentation, apiAddElement, apiDeleteElement, apiEditPresentation, apiEditTitle, apiFetchStore, apiUpdatePresentation, apiLogout } from "../api";
 import type { Presentation } from "./Dashboard";
 import ErrorContext from "../context/ErrorContext";
 import { v4 as uuidv4 } from "uuid";
 import { DeleteDialog } from "../components/DeleteModal";
 
-type SlideElements = {
+type SlideElement = {
   xSize: string;
   ySize: string;
   content: string;
+  type: string;
   fontSize?: string;
   color?: string;
-  type: string;
+  autoplay?: boolean;
 }
 
 type Slide = {
   id: string;
-  elements: SlideElements[];
+  elements: SlideElement[];
 };
 
 const Presentations = () => {
@@ -36,14 +37,21 @@ const Presentations = () => {
   const [thumbnail, setThumbnail] = useState<string | ArrayBuffer | null>(null);
   const [deleteMode, setDeleteMode] = useState<'presentation' | 'slide' | null>(null);
 
-  // For slide text elements
-  const [text, setText] = useState(false);
+  // Generic element properties
   const [currElement, setCurrElement] = useState<number | null>(null);
   const [xSize, setXSize] = useState("10");
   const [ySize, setYSize] = useState("10");
-  const [content, setContent] = useState("text");
+  const [content, setContent] = useState("");
+
+  // Text elements
+  const [text, setText] = useState(false);
   const [fontSize, setFontSize] = useState<string>("1.5"); // in em
   const [color, setColor] = useState<string>("#000000");
+
+  // Video elements
+  const [video, setVideo] = useState(false);
+  const [autoplay, setAutoplay] = useState(false);
+
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -87,9 +95,8 @@ const Presentations = () => {
     }
   }
 
-  const handleCreateText = async () => {
+  const handleCreateElement = async (newElement: SlideElement, modalClose: (_val: boolean) => void) => {
     try {
-      const newElement = {xSize, ySize, content, fontSize, color, type: "text"};
       setSlides(prev => {
         const updated = [...prev];
         const slide = {...updated[currentSlide]};
@@ -104,8 +111,8 @@ const Presentations = () => {
         return updated;
       });
 
-      await apiAddText(id, slides[currentSlide], newElement, currElement);
-      setText(false);
+      await apiAddElement(id, slides[currentSlide], newElement, currElement);
+      modalClose(false);
     } catch (err: unknown) {
       if (err instanceof Error) {
         showError(err.message); 
@@ -270,7 +277,7 @@ const Presentations = () => {
             ) : (
               <div key={slides[currentSlide].id} className="relative w-full max-w-5xl aspect-video bg-white flex border border-dotted border-gray-300 m-3">
                 {/* 2.3 Adding elements to slides */}
-                {slides[currentSlide].elements?.map((element: SlideElements, index) => (
+                {slides[currentSlide].elements?.map((element: SlideElement, index) => (
                   <div
                     key={index}
                     className="element absolute border border-solid border-gray-100 break-words"
@@ -283,10 +290,18 @@ const Presentations = () => {
                       setYSize(el.ySize);
                       setContent(el.content);
                       
-                      if (el.type === "text") {
+                      switch(el.type) {
+                      case "text":
                         setFontSize(el.fontSize as string);
                         setColor(el.color as string);
                         setText(true);
+                        break;
+                      case "video":
+                        setAutoplay(el.autoplay ?? false);
+                        setVideo(true);
+                        break;
+                      default:
+                        break;
                       }
                     }}
                     onContextMenu={(e) => {
@@ -294,9 +309,22 @@ const Presentations = () => {
                       handleDeleteElement(index);
                     }}
                   >
-                    <p style={{ color: element.color, fontSize: element.fontSize + "em"}}>
-                      {element.content}
-                    </p>
+                    {element.type === "text" ? (
+                      <p style={{ color: element.color, fontSize: `${element.fontSize}em` }}>
+                        {element.content}
+                      </p>
+                    ) : element.type === "video" ? (
+                      <div
+                        className="relative w-full h-full rounded-md border-4 border-slate-300 bg-white overflow-hidden hover:border-sky-400 hover:shadow-sm transition"
+                      >
+                        <iframe
+                          className="w-full h-full"
+                          src={`${element.content}${element.autoplay ? element.content.includes("?") ? "&autoplay=1": "?autoplay=1" : ""}`}
+                          allow="autoplay;"
+                          allowFullScreen
+                        />
+                      </div>
+                    ) : null}
                   </div>
                 ))}
                 <p className="absolute bottom-2 left-2 text-sm text-gray-500">
@@ -314,7 +342,7 @@ const Presentations = () => {
                   setCurrElement(null);
                   setXSize("10");
                   setYSize("10");
-                  setContent("text");
+                  setContent("");
                   setFontSize("1.5");
                   setColor("#000000");
                   setText(true);
@@ -327,7 +355,16 @@ const Presentations = () => {
                 <MdImage size={20} className="text-white"/>
                 Image
               </button>
-              <button className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md">
+              <button className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md" 
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  setCurrElement(null);
+                  setXSize("30");
+                  setYSize("30");
+                  setContent("");
+                  setAutoplay(false);
+                  setVideo(true);
+                }}>
                 <MdVideocam size={20} className="text-white"/>
                 Video
               </button>
@@ -451,10 +488,44 @@ const Presentations = () => {
             size="small" 
             className="self-end" 
             onClick={() => {
-              handleCreateText();
+              handleCreateElement({xSize, ySize, content, fontSize, color, type: "text"}, setText);
             }}
           >
             Add text
+          </Button>
+        </Box>
+      </Modal>
+      <Modal onClose={() => setVideo(false)} open={video}>
+        <Box className="absolute flex flex-col top-1/2 left-1/2 w-fit -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl gap-4">
+          <label className="text-gray-500 flex flex-col">
+            xSize (%)
+            <input type="number" min={0} max={100} className="text-black border border-[#cecece] rounded-sm p-2" value={xSize} onChange={(e) => setXSize(e.target.value)}></input>
+          </label>
+          <label className="text-gray-500 flex flex-col">
+            ySize (%)
+            <input type="number" min={0} max={100} className="text-black border border-[#cecece] rounded-sm p-2" value={ySize} onChange={(e) => setYSize(e.target.value)}></input>
+          </label>
+          <TextField label="Video URL" variant="outlined" value={content} onChange={(e) => setContent(e.target.value)}></TextField>
+          <FormControl>
+            <label className="text-gray-500 flex flex-col">
+            Autoplay
+              <Select
+                value={autoplay ? "true" : "false"}
+                onChange={e => setAutoplay(e.target.value === "true")}
+              >
+                <MenuItem value="true">True</MenuItem>
+                <MenuItem value="false">False</MenuItem>
+              </Select>
+            </label>
+          </FormControl>
+          <Button 
+            size="small" 
+            className="self-end" 
+            onClick={() => {
+              handleCreateElement({xSize, ySize, content, autoplay, type: "video"}, setVideo);
+            }}
+          >
+            Add Video
           </Button>
         </Box>
       </Modal>

@@ -231,7 +231,7 @@ export const apiEditPresentation = async (pid, newInfo) => {
   return presentations;
 }
 
-export const apiAddText = async (pid, currSlide, textInfo, currElement) => {
+export const apiAddElement = async (pid, currSlide, elementInfo, currElement) => {
   const token = localStorage.getItem("token");
 
   const dataStore = await apiFetchStore();
@@ -243,9 +243,9 @@ export const apiAddText = async (pid, currSlide, textInfo, currElement) => {
   const slide = presentation.slides.find((s) => s.id === currSlide.id);
 
   if (currElement === null) {
-    slide.elements.push(textInfo);
+    slide.elements.push(elementInfo);
   } else {
-    slide.elements[currElement] = textInfo;
+    slide.elements[currElement] = elementInfo;
   }
 
   const res = await fetch(`${URL}/store`, {
