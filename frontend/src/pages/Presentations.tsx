@@ -3,14 +3,24 @@ import { Box, Button, IconButton, Modal, TextField } from "@mui/material";
 import { FaArrowLeft, FaTrashAlt, FaEdit, FaAngleLeft, FaAngleRight, FaBars } from "react-icons/fa";
 import React, { useState, useEffect, useContext } from "react";
 import { MdSettings, MdOutlineTextFields, MdImage, MdVideocam, MdCode } from "react-icons/md";
-import { apiEditPresentation, apiEditTitle, apiFetchStore, apiUpdatePresentation } from "../api";
+import { apiAddText, apiDeleteElement, apiEditPresentation, apiEditTitle, apiFetchStore, apiUpdatePresentation } from "../api";
 import type { Presentation } from "./Dashboard";
 import ErrorContext from "../context/ErrorContext";
 import { v4 as uuidv4 } from "uuid";
 import { DeleteDialog } from "../components/DeleteModal";
 
+type SlideElements = {
+  xSize: string;
+  ySize: string;
+  content: string;
+  fontSize?: string;
+  color?: string;
+  type: string;
+}
+
 type Slide = {
   id: string;
+  elements: SlideElements[];
 };
 
 const Presentations = () => {
@@ -24,6 +34,14 @@ const Presentations = () => {
   const [openTools, setOpenTools] = useState(false);
   const [description, setDescription] = useState("");
   const [thumbnail, setThumbnail] = useState<string | ArrayBuffer | null>(null);
+
+  const [text, setText] = useState(false);
+  const [currElement, setCurrElement] = useState<number | null>(null);
+  const [xSize, setXSize] = useState("0");
+  const [ySize, setYSize] = useState("0");
+  const [content, setContent] = useState("text");
+  const [fontSize, setFontSize] = useState("1.5"); // in em
+  const [color, setColor] = useState("#000000");
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -55,7 +73,7 @@ const Presentations = () => {
 
   const handleCreateSlide = async () => {
     const newSlide = uuidv4();
-    const newSlides = [...slides, { id: newSlide }];
+    const newSlides = [...slides, { id: newSlide, elements: [] }];
     try {
       await apiUpdatePresentation(id, newSlides);
       setSlides(newSlides)
@@ -66,6 +84,57 @@ const Presentations = () => {
       }
     }
   }
+
+  const handleCreateText = async () => {
+    try {
+      const newElement = {xSize, ySize, content, fontSize, color, type: "text"};
+      setSlides(prev => {
+        const updated = [...prev];
+        const slide = {...updated[currentSlide]};
+
+        if (currElement === null) {
+          slide.elements = [...slide.elements || [], newElement]
+        } else {
+          slide.elements[currElement] = newElement;
+        }
+        
+        updated[currentSlide] = slide;
+        return updated;
+      });
+
+      await apiAddText(id, slides[currentSlide], newElement, currElement);
+      setContent("text");
+      setFontSize("1.5");
+      setColor("#000000");
+      setText(false);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        showError(err.message); 
+      }
+    }
+  }
+
+  const handleDeleteElement = async (index: number) => {
+    try {
+      setSlides(prev => {
+        const updated = [...prev];
+        const slide = {...updated[currentSlide]};
+
+        const elements = [...slide.elements];
+        elements.splice(index, 1); 
+        
+        slide.elements = elements;
+        updated[currentSlide] = slide;
+
+        return updated;
+      });
+      await apiDeleteElement(id, slides[currentSlide], index);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        showError(err.message); 
+      }
+    }
+  } 
 
   useEffect(() => {
     const loadSlides = async () => {
@@ -84,15 +153,15 @@ const Presentations = () => {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'ArrowRight' && slides.length > 1 && currentSlide !== (slides.length - 1)) {
+      if (event.key === "ArrowRight" && slides.length > 1 && currentSlide !== (slides.length - 1)) {
         setCurrentSlide(currentSlide + 1)
-      } else if (event.key === 'ArrowLeft' && slides.length > 1 && currentSlide !== 0) {
+      } else if (event.key === "ArrowLeft" && slides.length > 1 && currentSlide !== 0) {
         setCurrentSlide(currentSlide - 1)
       }
     }
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [currentSlide, slides.length]);
 
@@ -160,8 +229,27 @@ const Presentations = () => {
             {slides.length === 0 ? (
               <p>No slides available</p>
             ) : (
-              <div key={slides[currentSlide].id} className="relative w-full max-w-5xl aspect-video bg-white flex items-center justify-center border border-dotted border-gray-300 m-3">
-                <p>Slide {slides[currentSlide].id}</p>
+              <div key={slides[currentSlide].id} className="relative w-full max-w-5xl aspect-video bg-white flex border border-dotted border-gray-300 m-3">
+                {/* 2.3 Adding elements to slides */}
+                {slides[currentSlide].elements?.map((element: SlideElements, index) => (
+                  <div
+                    key={index}
+                    className="element absolute border border-solid border-gray-100"
+                    style={{width: element.xSize + "%", height: element.ySize + "%"}}
+                    onDoubleClick={() => {
+                      setCurrElement(index);
+                      setText(true);
+                    }}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      handleDeleteElement(index);
+                    }}
+                  >
+                    <p style={{ color: element.color, fontSize: element.fontSize + "em"}}>
+                      {element.content}
+                    </p>
+                  </div>
+                ))}
                 <p className="absolute bottom-2 left-2 text-sm text-gray-500">
                   {currentSlide + 1}
                 </p>
@@ -170,7 +258,14 @@ const Presentations = () => {
           </div>
           {openTools && (
             <div className="absolute left-11 top-0 flex flex-col h-full w-fit bg-[#1a1a1c] shadow-xl overflow-hidden p-2.5 gap-3 border-l border-solid border-[#323232]">
-              <button className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md">
+              <button 
+                className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md"
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  setCurrElement(null);
+                  setText(true);
+                }}
+              >
                 <MdOutlineTextFields size={20} className="text-white"/>
                 Text
               </button>
@@ -258,6 +353,33 @@ const Presentations = () => {
           <TextField label="Name" variant="outlined" value={newName} onChange={(e) => setNewName(e.target.value)}/>
           <Button type="submit" variant="contained" onClick={handleTitle}>
             Finish
+          </Button>
+        </Box>
+      </Modal>
+      <Modal onClose={() => setText(false)} open={text}>
+        <Box className="absolute flex flex-col top-1/2 left-1/2 w-fit -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl gap-4">
+          <label className="text-gray-500 flex flex-col">
+            xSize (%)
+            <input type="number" min={0} max={100} className="text-black border border-[#cecece] rounded-sm p-2" value={xSize} onChange={(e) => setXSize(e.target.value)}></input>
+          </label>
+          <label className="text-gray-500 flex flex-col">
+            ySize (%)
+            <input type="number" min={0} max={100} className="text-black border border-[#cecece] rounded-sm p-2" value={ySize} onChange={(e) => setYSize(e.target.value)}></input>
+          </label>
+          <TextField label="Text" variant="outlined" value={content} onChange={(e) => setContent(e.target.value)}></TextField>
+          <TextField label="Font Size" type="number" variant="outlined" value={fontSize} onChange={(e) => setFontSize(e.target.value)}></TextField>
+          <label className="text-gray-500 flex flex-col">
+            Text Colour
+            <input type="color" value={color} onChange={(e) => setColor(e.target.value)}></input>
+          </label>
+          <Button 
+            size="small" 
+            className="self-end" 
+            onClick={() => {
+              handleCreateText();
+            }}
+          >
+            Add text
           </Button>
         </Box>
       </Modal>
