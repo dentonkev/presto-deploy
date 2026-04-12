@@ -3,13 +3,13 @@ import Typography from "@mui/material/Typography";
 import Modal from "@mui/material/Modal";
 import { Button } from "@mui/material";
 
-const ErrorModal = ({
-  message,
-  onClose,
-}: {
+export interface ErrorModalProps {
   message: string;
   onClose: () => void;
-}) => {
+}
+
+const ErrorModal = (props: ErrorModalProps) => {
+  const { message, onClose } = props;
   return (
     <Modal
       open

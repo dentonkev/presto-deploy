@@ -1,25 +1,33 @@
 import { useNavigate, useParams } from "react-router-dom"
-import { Box, Button, FormControl, IconButton, MenuItem, Modal, Select, TextField } from "@mui/material";
-import { FaArrowLeft, FaTrashAlt, FaEdit, FaAngleLeft, FaAngleRight, FaBars } from "react-icons/fa";
+import { Box, Button, IconButton, Modal, TextField } from "@mui/material";
+import { FaEdit, FaAngleLeft, FaAngleRight } from "react-icons/fa";
 import React, { useState, useEffect, useContext } from "react";
-import { MdSettings, MdOutlineTextFields, MdImage, MdVideocam, MdCode } from "react-icons/md";
 import { apiDeletePresentation, apiAddElement, apiDeleteElement, apiEditPresentation, apiEditTitle, apiFetchStore, apiUpdatePresentation, apiLogout } from "../api";
 import type { Presentation } from "./Dashboard";
 import ErrorContext from "../context/ErrorContext";
 import { v4 as uuidv4 } from "uuid";
 import { DeleteDialog } from "../components/DeleteModal";
+import { TextModal } from "../components/TextModal";
+import { ImageModal } from "../components/ImageModal";
+import { VideoModal } from "../components/VideoModal";
+import { Slide } from "../components/Slide";
+import { SideBar } from "../components/SideBar";
+import { ToolBar } from "../components/ToolBar";
+import { Settings } from "../components/Settings";
+import { RightSideBar } from "../components/RightSideBar";
 
-type SlideElement = {
+export type SlideElement = {
   xSize: string;
   ySize: string;
   content: string;
   type: string;
   fontSize?: string;
   color?: string;
+  alt?: string;
   autoplay?: boolean;
 }
 
-type Slide = {
+export type SlideData = {
   id: string;
   elements: SlideElement[];
 };
@@ -27,12 +35,12 @@ type Slide = {
 const Presentations = () => {
   const [openDelete, setOpenDelete] = useState(false);
   const [openTitle, setOpenTitle] = useState(false);
-  const [slides, setSlides] = useState<Slide[]>([]);
+  const [slides, setSlides] = useState<SlideData[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0)
   const [newName, setNewName] = useState("");
   const [name, setName] = useState("");
   const [openSettings, setOpenSettings] = useState(false);
-  const [openTools, setOpenTools] = useState(false);
+  const [openTools, setOpenTools] = useState(true);
   const [description, setDescription] = useState("");
   const [thumbnail, setThumbnail] = useState<string | ArrayBuffer | null>(null);
   const [deleteMode, setDeleteMode] = useState<'presentation' | 'slide' | null>(null);
@@ -48,10 +56,17 @@ const Presentations = () => {
   const [fontSize, setFontSize] = useState<string>("1.5"); // in em
   const [color, setColor] = useState<string>("#000000");
 
+  // Image elements
+  const [image, setImage] = useState(false);
+  const [alt, setAlt] = useState("");
+
   // Video elements
   const [video, setVideo] = useState(false);
   const [autoplay, setAutoplay] = useState(false);
 
+  // Delete Dialog config
+  const deleteDialogTitle = deleteMode === "presentation" ? "You are deleting the full presentation." : "This slide will be permanently removed.";
+  const deleteDialogContent = deleteMode === "presentation" ? "Are you sure?" : "Delete this Slide?";
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -72,6 +87,20 @@ const Presentations = () => {
     };
     reader.readAsDataURL(file);
   };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === "string") {
+        setContent(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }
 
   const handleSettingsSave = async () => {
     await apiEditPresentation(id, {
@@ -176,6 +205,31 @@ const Presentations = () => {
     }
   };
 
+  const handleToolsToggle = () => {
+    setOpenTools((openTools) => {
+      const next = !openTools;
+      if (next) {
+        setOpenSettings(false);
+      }
+      return next;
+    });
+  };
+
+  const handleSettingsToggle = () => {
+    setOpenSettings((openSettings) => {
+      const next = !openSettings;
+      if (next) {
+        setOpenTools(false);
+      }
+      return next;
+    });
+  };
+
+  const handleOpenDeletePresentation = () => {
+    setDeleteMode("presentation");
+    setOpenDelete(true);
+  };
+
   useEffect(() => {
     const loadSlides = async () => {
       const data = await apiFetchStore();
@@ -226,196 +280,58 @@ const Presentations = () => {
           </Button>
         </div>
         <div className="flex h-full relative">
-          {/* Side bar */}
-          <div className="flex flex-col justify-between p-3.5 bg-black h-full">
-            <div className="flex flex-col gap-5">
-              <button 
-                aria-label="Go to Dashboard"
-                className="cursor-pointer"
-                onClick={() => navigate("/dashboard")}
-              >
-                <FaArrowLeft className="text-gray-400 hover:text-red-500"/>
-              </button>
-              <button
-                aria-label="Tools"
-                className="cursor-pointer"
-                onClick={(e) => {
-                  e.currentTarget.blur();
-                  setOpenTools(!openTools);
-                }}
-              >
-                <FaBars className="text-gray-400 hover:text-red-500"/>
-              </button>
-            </div>
-            <div className="flex flex-col gap-5">
-              <button 
-                aria-label="Settings"
-                className="cursor-pointer"
-                onClick={(e) => {
-                  e.currentTarget.blur();
-                  setOpenSettings(!openSettings);
-                }}
-              >
-                <MdSettings className="text-gray-400 hover:text-red-500" size={16}/>
-              </button>
-              <button
-                aria-label="Delete"
-                className="cursor-pointer"
-                onClick={(e) => {
-                  e.currentTarget.blur();
-                  setDeleteMode("presentation");
-                  setOpenDelete(true);
-                }}
-              >
-                <FaTrashAlt className="text-gray-400 hover:text-red-500"/>
-              </button>
-            </div>
-          </div>
-          <div className="flex-1 flex items-center justify-center align-center bg-white">
-            {slides.length === 0 ? (
-              <p>No slides available</p>
-            ) : (
-              <div key={slides[currentSlide].id} className="relative w-full max-w-5xl aspect-video bg-white flex border border-dotted border-gray-300 m-3">
-                {/* 2.3 Adding elements to slides */}
-                {slides[currentSlide].elements?.map((element: SlideElement, index) => (
-                  <div
-                    key={index}
-                    className="element absolute border border-solid border-gray-100 break-words"
-                    style={{width: element.xSize + "%", height: element.ySize + "%"}}
-                    onDoubleClick={() => {
-                      const el = slides[currentSlide].elements[index];
-
-                      setCurrElement(index);
-                      setXSize(el.xSize);
-                      setYSize(el.ySize);
-                      setContent(el.content);
-                      
-                      switch(el.type) {
-                      case "text":
-                        setFontSize(el.fontSize as string);
-                        setColor(el.color as string);
-                        setText(true);
-                        break;
-                      case "video":
-                        setAutoplay(el.autoplay ?? false);
-                        setVideo(true);
-                        break;
-                      default:
-                        break;
-                      }
-                    }}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      handleDeleteElement(index);
-                    }}
-                  >
-                    {element.type === "text" ? (
-                      <p style={{ color: element.color, fontSize: `${element.fontSize}em` }}>
-                        {element.content}
-                      </p>
-                    ) : element.type === "video" ? (
-                      <div
-                        className="relative w-full h-full rounded-md border-4 border-slate-300 bg-white overflow-hidden hover:border-sky-400 hover:shadow-sm transition"
-                      >
-                        <iframe
-                          className="w-full h-full"
-                          src={`${element.content}${element.autoplay ? element.content.includes("?") ? "&autoplay=1": "?autoplay=1" : ""}`}
-                          allow="autoplay;"
-                          allowFullScreen
-                        />
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-                <p className="absolute bottom-2 left-2 text-sm text-gray-500">
-                  {currentSlide + 1}
-                </p>
-              </div>
-            )}
-          </div>
+          <SideBar
+            openDashboard={() => navigate("/dashboard")}
+            toggleTools={handleToolsToggle}
+            toggleSettings={handleSettingsToggle}
+            deletePresentation={handleOpenDeletePresentation}
+          />
+          <Slide
+            slides={slides}
+            currentSlide={currentSlide}
+            setCurrElement={setCurrElement}
+            setXSize={setXSize}
+            setYSize={setYSize}
+            setContent={setContent}
+            setFontSize={setFontSize}
+            setColor={setColor}
+            setText={setText}
+            setAlt={setAlt}
+            setImage={setImage}
+            setAutoplay={setAutoplay}
+            setVideo={setVideo}
+            handleDeleteElement={handleDeleteElement}
+          />
           {openTools && (
-            <div className="absolute left-11 top-0 flex flex-col h-full w-fit bg-[#1a1a1c] shadow-xl overflow-hidden p-2.5 gap-3 border-l border-solid border-[#323232]">
-              <button 
-                className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md"
-                onClick={(e) => {
-                  e.currentTarget.blur();
-                  setCurrElement(null);
-                  setXSize("10");
-                  setYSize("10");
-                  setContent("");
-                  setFontSize("1.5");
-                  setColor("#000000");
-                  setText(true);
-                }}
-              >
-                <MdOutlineTextFields size={20} className="text-white"/>
-                Text
-              </button>
-              <button className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md">
-                <MdImage size={20} className="text-white"/>
-                Image
-              </button>
-              <button className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md" 
-                onClick={(e) => {
-                  e.currentTarget.blur();
-                  setCurrElement(null);
-                  setXSize("30");
-                  setYSize("30");
-                  setContent("");
-                  setAutoplay(false);
-                  setVideo(true);
-                }}>
-                <MdVideocam size={20} className="text-white"/>
-                Video
-              </button>
-              <button className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md">
-                <MdCode size={20} className="text-white"/>
-                Code
-              </button>
-            </div>
+            <ToolBar 
+              setCurrElement={setCurrElement}
+              setXSize={setXSize}
+              setYSize={setYSize}
+              setContent={setContent}
+              setFontSize={setFontSize}
+              setColor={setColor}
+              setText={setText}
+              setAlt={setAlt}
+              setImage={setImage}
+              setAutoplay={setAutoplay}
+              setVideo={setVideo}
+            />
           )}
           {openSettings && (
-            <div className="absolute left-11 top-0 flex flex-col h-full w-80 bg-white shadow-xl overflow-scroll">
-              <div className="bg-white h-full">
-                <div className="p-4 font-semibold flex justify-between">
-                  Settings
-                </div>
-                <div className="p-4 flex flex-col gap-4">
-                  <TextField label="Description" multiline rows={3} value={description} onChange={(e) => setDescription(e.target.value)}/>
-                </div>
-                <div className="flex justify-between items-center m-[16px]">
-                  <Button variant="outlined" component="label">
-                    Upload Thumbnail
-                    <input type="file" hidden accept="image/*" onChange={handleThumbnail}
-                    />
-                  </Button>
-                  {thumbnail && (
-                    <img src={thumbnail as string} className="w-1/3 bg-gray-300 flex-shrink-0 border border-dotted border-gray-400"/>
-                  )}
-                </div>
-              </div>
-              <div className="flex justify-end bg-white p-4 shadow-[0_-5px_15px_rgba(0,0,0,0.1)]">
-                <Button onClick={handleSettingsSave} variant="contained">Save</Button>
-              </div>
-            </div>
+            <Settings 
+              description={description}
+              setDescription={setDescription}
+              thumbnail={thumbnail}
+              handleThumbnail={handleThumbnail}
+              handleSettingsSave={handleSettingsSave}
+            />
           )}
-          <div className="flex flex-col justify-between p-3.5 bg-black h-full">
-            <button
-              aria-label="Delete"
-              className="cursor-pointer"
-              onClick={(e) => {
-                e.currentTarget.blur();
-                if (slides.length <= 1) {
-                  showError("There are one or fewer slides in this presentation, please delete the entire presentation instead.")
-                  return;
-                } 
-                setDeleteMode("slide")
-                setOpenDelete(true);
-              }}
-            >
-              <FaTrashAlt className="text-gray-400 hover:text-red-500"/>
-            </button>
-          </div>
+          <RightSideBar 
+            showError={showError}
+            setDeleteMode={setDeleteMode}
+            setOpenDelete={setOpenDelete}
+            slides={slides}
+          />
         </div>
         {slides.length > 1 ? (
           <div className="z-50 fixed bottom-2 right-13">
@@ -455,10 +371,9 @@ const Presentations = () => {
           New Slide
       </Button>
       <DeleteDialog open={openDelete} selectedValue="" onClose={() => {
-        setDeleteMode(null);
         setOpenDelete(false);
-      }} title={deleteMode === "presentation" ? "You are deleting the full presentation." : "This slide will be permanently removed."}
-      content={deleteMode === "presentation" ? "Are you sure?" : "Delete this Slide?"}
+      }} title={deleteDialogTitle}
+      content={deleteDialogContent}
       onDelete={deleteMode === "presentation" ? handleDeletePresentation : handleDeleteSlide}/>
       <Modal onClose={() => setOpenTitle(false)} open={openTitle}>
         <Box className="absolute flex flex-col top-1/2 left-1/2 w-96 -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl gap-4">
@@ -468,67 +383,48 @@ const Presentations = () => {
           </Button>
         </Box>
       </Modal>
-      <Modal onClose={() => setText(false)} open={text}>
-        <Box className="absolute flex flex-col top-1/2 left-1/2 w-fit -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl gap-4">
-          <label className="text-gray-500 flex flex-col">
-            xSize (%)
-            <input type="number" min={0} max={100} className="text-black border border-[#cecece] rounded-sm p-2" value={xSize} onChange={(e) => setXSize(e.target.value)}></input>
-          </label>
-          <label className="text-gray-500 flex flex-col">
-            ySize (%)
-            <input type="number" min={0} max={100} className="text-black border border-[#cecece] rounded-sm p-2" value={ySize} onChange={(e) => setYSize(e.target.value)}></input>
-          </label>
-          <TextField label="Text" variant="outlined" value={content} onChange={(e) => setContent(e.target.value)}></TextField>
-          <TextField label="Font Size" type="number" variant="outlined" value={fontSize} onChange={(e) => setFontSize(e.target.value)}></TextField>
-          <label className="text-gray-500 flex flex-col">
-            Text Colour
-            <input type="color" value={color} onChange={(e) => setColor(e.target.value)}></input>
-          </label>
-          <Button 
-            size="small" 
-            className="self-end" 
-            onClick={() => {
-              handleCreateElement({xSize, ySize, content, fontSize, color, type: "text"}, setText);
-            }}
-          >
-            Add text
-          </Button>
-        </Box>
-      </Modal>
-      <Modal onClose={() => setVideo(false)} open={video}>
-        <Box className="absolute flex flex-col top-1/2 left-1/2 w-fit -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl gap-4">
-          <label className="text-gray-500 flex flex-col">
-            xSize (%)
-            <input type="number" min={0} max={100} className="text-black border border-[#cecece] rounded-sm p-2" value={xSize} onChange={(e) => setXSize(e.target.value)}></input>
-          </label>
-          <label className="text-gray-500 flex flex-col">
-            ySize (%)
-            <input type="number" min={0} max={100} className="text-black border border-[#cecece] rounded-sm p-2" value={ySize} onChange={(e) => setYSize(e.target.value)}></input>
-          </label>
-          <TextField label="Video URL" variant="outlined" value={content} onChange={(e) => setContent(e.target.value)}></TextField>
-          <FormControl>
-            <label className="text-gray-500 flex flex-col">
-            Autoplay
-              <Select
-                value={autoplay ? "true" : "false"}
-                onChange={e => setAutoplay(e.target.value === "true")}
-              >
-                <MenuItem value="true">True</MenuItem>
-                <MenuItem value="false">False</MenuItem>
-              </Select>
-            </label>
-          </FormControl>
-          <Button 
-            size="small" 
-            className="self-end" 
-            onClick={() => {
-              handleCreateElement({xSize, ySize, content, autoplay, type: "video"}, setVideo);
-            }}
-          >
-            Add Video
-          </Button>
-        </Box>
-      </Modal>
+      <TextModal
+        text={text}
+        setText={setText}
+        xSize={xSize}
+        setXSize={setXSize}
+        ySize={ySize}
+        setYSize={setYSize}
+        content={content}
+        setContent={setContent}
+        fontSize={fontSize}
+        setFontSize={setFontSize}
+        color={color}
+        setColor={setColor}
+        handleCreateElement={handleCreateElement}
+      />
+      <ImageModal 
+        image={image}
+        setImage={setImage}
+        xSize={xSize}
+        setXSize={setXSize}
+        ySize={ySize}
+        setYSize={setYSize}
+        content={content}
+        setContent={setContent}
+        alt={alt}
+        setAlt={setAlt}
+        handleImageUpload={handleImageUpload}
+        handleCreateElement={handleCreateElement}
+      />
+      <VideoModal 
+        video={video}
+        setVideo={setVideo}
+        xSize={xSize}
+        setXSize={setXSize}
+        ySize={ySize}
+        setYSize={setYSize}
+        content={content}
+        setContent={setContent}
+        autoplay={autoplay}
+        setAutoplay={setAutoplay}
+        handleCreateElement={handleCreateElement}
+      />
     </>
   );
 }
