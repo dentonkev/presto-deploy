@@ -1,18 +1,4 @@
-type SlideElement = {
-  xSize: string;
-  ySize: string;
-  content: string;
-  type: string;
-  fontSize?: string;
-  color?: string;
-  alt?: string;
-  autoplay?: boolean;
-};
-
-type SlideData = {
-  id: string;
-  elements: SlideElement[];
-};
+import type { SlideData, SlideElement } from "../pages/Presentations";
 
 export interface SlideProps {
   slides: SlideData[];

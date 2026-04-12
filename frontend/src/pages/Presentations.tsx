@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom"
 import { Box, Button, IconButton, Modal, TextField } from "@mui/material";
-import { FaTrashAlt, FaEdit, FaAngleLeft, FaAngleRight } from "react-icons/fa";
+import { FaEdit, FaAngleLeft, FaAngleRight } from "react-icons/fa";
 import React, { useState, useEffect, useContext } from "react";
 import { apiDeletePresentation, apiAddElement, apiDeleteElement, apiEditPresentation, apiEditTitle, apiFetchStore, apiUpdatePresentation, apiLogout } from "../api";
 import type { Presentation } from "./Dashboard";
@@ -14,8 +14,9 @@ import { Slide } from "../components/Slide";
 import { SideBar } from "../components/SideBar";
 import { ToolBar } from "../components/ToolBar";
 import { Settings } from "../components/Settings";
+import { RightSideBar } from "../components/RightSideBar";
 
-type SlideElement = {
+export type SlideElement = {
   xSize: string;
   ySize: string;
   content: string;
@@ -26,7 +27,7 @@ type SlideElement = {
   autoplay?: boolean;
 }
 
-type SlideData = {
+export type SlideData = {
   id: string;
   elements: SlideElement[];
 };
@@ -325,23 +326,12 @@ const Presentations = () => {
               handleSettingsSave={handleSettingsSave}
             />
           )}
-          <div className="flex flex-col justify-between p-3.5 bg-black h-full">
-            <button
-              aria-label="Delete"
-              className="cursor-pointer"
-              onClick={(e) => {
-                e.currentTarget.blur();
-                if (slides.length <= 1) {
-                  showError("There are one or fewer slides in this presentation, please delete the entire presentation instead.")
-                  return;
-                } 
-                setDeleteMode("slide")
-                setOpenDelete(true);
-              }}
-            >
-              <FaTrashAlt className="text-gray-400 hover:text-red-500"/>
-            </button>
-          </div>
+          <RightSideBar 
+            showError={showError}
+            setDeleteMode={setDeleteMode}
+            setOpenDelete={setOpenDelete}
+            slides={slides}
+          />
         </div>
         {slides.length > 1 ? (
           <div className="z-50 fixed bottom-2 right-13">
