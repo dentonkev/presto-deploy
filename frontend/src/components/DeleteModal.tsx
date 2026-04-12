@@ -4,7 +4,7 @@ import { Fragment } from "react/jsx-runtime";
 import ErrorContext from "../context/ErrorContext";
 import { MdDelete } from "react-icons/md";
 
-export interface SimpleDialogProps {
+export interface DeleteDialogProps {
   title?: string;
   content?: string
   open: boolean;
@@ -13,7 +13,7 @@ export interface SimpleDialogProps {
   onDelete: () => Promise<void>;
 };
 
-export const DeleteDialog = (props: SimpleDialogProps) => {
+export const DeleteDialog = (props: DeleteDialogProps) => {
   const { onClose, selectedValue, open, title, content, onDelete } = props;
   const showError = useContext(ErrorContext);
 

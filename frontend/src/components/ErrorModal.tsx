@@ -3,12 +3,12 @@ import Typography from "@mui/material/Typography";
 import Modal from "@mui/material/Modal";
 import { Button } from "@mui/material";
 
-export interface SimpleDialogProps {
+export interface ErrorModalProps {
   message: string;
   onClose: () => void;
 }
 
-const ErrorModal = (props: SimpleDialogProps) => {
+const ErrorModal = (props: ErrorModalProps) => {
   const { message, onClose } = props;
   return (
     <Modal

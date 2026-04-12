@@ -1,6 +1,6 @@
 import { Box, Button, Modal, TextField } from "@mui/material";
 
-export interface SimpleDialogProps {
+export interface TextModalProps {
   text: boolean;
   setText: (_val: boolean) => void;
   xSize: string;
@@ -16,7 +16,7 @@ export interface SimpleDialogProps {
   handleCreateElement: (_val: {xSize: string, ySize: string, content: string, fontSize: string, color: string, type: string}, _callback: (_val: boolean) => void) => void;
 }
 
-export const TextModal = (props: SimpleDialogProps) => {
+export const TextModal = (props: TextModalProps) => {
   const { text, setText, xSize, setXSize, ySize, setYSize, content, setContent, fontSize, setFontSize, color, setColor, handleCreateElement } = props;
   return (
     <Modal onClose={() => setText(false)} open={text}>

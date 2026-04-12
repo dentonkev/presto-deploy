@@ -1,7 +1,7 @@
 import { Box, Button, Modal, TextField } from "@mui/material";
 import React from "react";
 
-export interface SimpleDialogProps {
+export interface ImageModalProps {
   image: boolean;
   setImage: (_val: boolean) => void;
   xSize: string;
@@ -16,7 +16,7 @@ export interface SimpleDialogProps {
   handleCreateElement: (_val: {xSize: string, ySize: string, content: string, alt: string, type: string}, _callback: (_val: boolean) => void) => void;
 }
 
-export const ImageModal = (props: SimpleDialogProps) => {
+export const ImageModal = (props: ImageModalProps) => {
   const { image, setImage, xSize, setXSize, ySize, setYSize, content, setContent, alt, setAlt, handleImageUpload, handleCreateElement } = props;
   return (
     <Modal onClose={() => setImage(false)} open={image}>
