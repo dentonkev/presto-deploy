@@ -1,8 +1,8 @@
 import { useNavigate, useParams } from "react-router-dom"
 import { Box, Button, IconButton, Modal, TextField } from "@mui/material";
-import { FaArrowLeft, FaTrashAlt, FaEdit, FaAngleLeft, FaAngleRight, FaBars } from "react-icons/fa";
+import { FaTrashAlt, FaEdit, FaAngleLeft, FaAngleRight } from "react-icons/fa";
 import React, { useState, useEffect, useContext } from "react";
-import { MdSettings, MdOutlineTextFields, MdImage, MdVideocam, MdCode } from "react-icons/md";
+import { MdOutlineTextFields, MdImage, MdVideocam, MdCode } from "react-icons/md";
 import { apiDeletePresentation, apiAddElement, apiDeleteElement, apiEditPresentation, apiEditTitle, apiFetchStore, apiUpdatePresentation, apiLogout } from "../api";
 import type { Presentation } from "./Dashboard";
 import ErrorContext from "../context/ErrorContext";
@@ -12,6 +12,7 @@ import { TextModal } from "../components/TextModal";
 import { ImageModal } from "../components/ImageModal";
 import { VideoModal } from "../components/VideoModal";
 import { Slide } from "../components/Slide";
+import { SideBar } from "../components/SideBar";
 
 type SlideElement = {
   xSize: string;
@@ -60,6 +61,10 @@ const Presentations = () => {
   // Video elements
   const [video, setVideo] = useState(false);
   const [autoplay, setAutoplay] = useState(false);
+
+  // Delete Dialog config
+  const deleteDialogTitle = deleteMode === "presentation" ? "You are deleting the full presentation." : "This slide will be permanently removed.";
+  const deleteDialogContent = deleteMode === "presentation" ? "Are you sure?" : "Delete this Slide?";
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -198,6 +203,31 @@ const Presentations = () => {
     }
   };
 
+  const handleToolsToggle = () => {
+    setOpenTools((openTools) => {
+      const next = !openTools;
+      if (next) {
+        setOpenSettings(false);
+      }
+      return next;
+    });
+  };
+
+  const handleSettingsToggle = () => {
+    setOpenSettings((openSettings) => {
+      const next = !openSettings;
+      if (next) {
+        setOpenTools(false);
+      }
+      return next;
+    });
+  };
+
+  const handleOpenDeletePresentation = () => {
+    setDeleteMode("presentation");
+    setOpenDelete(true);
+  };
+
   useEffect(() => {
     const loadSlides = async () => {
       const data = await apiFetchStore();
@@ -248,63 +278,12 @@ const Presentations = () => {
           </Button>
         </div>
         <div className="flex h-full relative">
-          {/* Side bar */}
-          <div className="flex flex-col justify-between p-3.5 bg-black h-full">
-            <div className="flex flex-col gap-5">
-              <button 
-                aria-label="Go to Dashboard"
-                className="cursor-pointer"
-                onClick={() => navigate("/dashboard")}
-              >
-                <FaArrowLeft className="text-gray-400 hover:text-red-500"/>
-              </button>
-              <button
-                aria-label="Tools"
-                className="cursor-pointer"
-                onClick={(e) => {
-                  e.currentTarget.blur();
-                  setOpenTools(openTools => {
-                    const next = !openTools;
-                    if (next) {
-                      setOpenSettings(false);
-                    }
-                    return next;
-                  });
-                }}
-              >
-                <FaBars className="text-gray-400 hover:text-red-500"/>
-              </button>
-            </div>
-            <div className="flex flex-col gap-5">
-              <button 
-                aria-label="Settings"
-                className="cursor-pointer"
-                onClick={(e) => {
-                  e.currentTarget.blur();
-                  setOpenSettings(openSettings => {
-                    const next = !openSettings;
-                    if (next) {
-                      setOpenTools(false);
-                    }
-                    return next;
-                  });
-                }}
-              >
-                <MdSettings className="text-gray-400 hover:text-red-500" size={16}/>
-              </button>
-              <button
-                aria-label="Delete"
-                className="cursor-pointer"
-                onClick={(e) => {
-                  e.currentTarget.blur();
-                  setDeleteMode("presentation");
-                  setOpenDelete(true);
-                }}
-              >
-                <FaTrashAlt className="text-gray-400 hover:text-red-500"/>
-              </button>
-            </div>
-          </div>
+          <SideBar
+            openDashboard={() => navigate("/dashboard")}
+            toggleTools={handleToolsToggle}
+            toggleSettings={handleSettingsToggle}
+            deletePresentation={handleOpenDeletePresentation}
+          />
           <Slide
             slides={slides}
             currentSlide={currentSlide}
@@ -452,10 +431,9 @@ const Presentations = () => {
           New Slide
       </Button>
       <DeleteDialog open={openDelete} selectedValue="" onClose={() => {
-        setDeleteMode(null);
         setOpenDelete(false);
-      }} title={deleteMode === "presentation" ? "You are deleting the full presentation." : "This slide will be permanently removed."}
-      content={deleteMode === "presentation" ? "Are you sure?" : "Delete this Slide?"}
+      }} title={deleteDialogTitle}
+      content={deleteDialogContent}
       onDelete={deleteMode === "presentation" ? handleDeletePresentation : handleDeleteSlide}/>
       <Modal onClose={() => setOpenTitle(false)} open={openTitle}>
         <Box className="absolute flex flex-col top-1/2 left-1/2 w-96 -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl gap-4">
