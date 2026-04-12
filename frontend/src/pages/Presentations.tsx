@@ -262,7 +262,13 @@ const Presentations = () => {
                 className="cursor-pointer"
                 onClick={(e) => {
                   e.currentTarget.blur();
-                  setOpenTools(!openTools);
+                  setOpenTools(openTools => {
+                    const next = !openTools;
+                    if (next) {
+                      setOpenSettings(false);
+                    }
+                    return next;
+                  });
                 }}
               >
                 <FaBars className="text-gray-400 hover:text-red-500"/>
@@ -274,7 +280,13 @@ const Presentations = () => {
                 className="cursor-pointer"
                 onClick={(e) => {
                   e.currentTarget.blur();
-                  setOpenSettings(!openSettings);
+                  setOpenSettings(openSettings => {
+                    const next = !openSettings;
+                    if (next) {
+                      setOpenTools(false);
+                    }
+                    return next;
+                  });
                 }}
               >
                 <MdSettings className="text-gray-400 hover:text-red-500" size={16}/>
