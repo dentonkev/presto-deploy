@@ -1,4 +1,5 @@
 import type { SlideData, SlideElement } from "../pages/Presentations";
+import React, { useState } from "react";
 
 export interface SlideProps {
   slides: SlideData[];
@@ -35,8 +36,38 @@ export const Slide = (props: SlideProps) => {
     handleDeleteElement,
   } = props;
 
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  const handleDoubleClick = (e: React.MouseEvent<HTMLDivElement>, index: number) => {
+    e.preventDefault();
+    const el = slides[currentSlide].elements[index];
+
+    setCurrElement(index);
+    setXSize(el.xSize);
+    setYSize(el.ySize);
+    setContent(el.content);
+            
+    switch(el.type) {
+    case "text":
+      setFontSize(el.fontSize as string);
+      setColor(el.color as string);
+      setText(true);
+      break;
+    case "image":
+      setAlt(el.alt ?? "")
+      setImage(true)
+      break;
+    case "video":
+      setAutoplay(el.autoplay ?? false);
+      setVideo(true);
+      break;
+    default:
+      break;
+    }
+  }
+
   return (
-    <div className="flex-1 flex items-center justify-center align-center bg-white">
+    <div className="flex-1 flex items-center justify-center align-center bg-white" onClick={() => setSelectedIndex(null)}>
       {slides.length === 0 ? (
         <p>No slides available</p>
       ) : (
@@ -45,39 +76,21 @@ export const Slide = (props: SlideProps) => {
           {slides[currentSlide].elements?.map((element: SlideElement, index) => (
             <div
               key={index}
-              className="element absolute border border-solid border-gray-100 break-words"
-              style={{width: element.xSize + "%", height: element.ySize + "%"}}
-              onDoubleClick={(e) => {
-                e.preventDefault();
-                const el = slides[currentSlide].elements[index];
-
-                setCurrElement(index);
-                setXSize(el.xSize);
-                setYSize(el.ySize);
-                setContent(el.content);
-                      
-                switch(el.type) {
-                case "text":
-                  setFontSize(el.fontSize as string);
-                  setColor(el.color as string);
-                  setText(true);
-                  break;
-                case "image":
-                  setAlt(el.alt ?? "")
-                  setImage(true)
-                  break;
-                case "video":
-                  setAutoplay(el.autoplay ?? false);
-                  setVideo(true);
-                  break;
-                default:
-                  break;
-                }
+              onClick={(e) => {
+                setSelectedIndex(index); 
+                e.stopPropagation();
               }}
+              onDoubleClick={(e) => handleDoubleClick(e, index) }
               onContextMenu={(e) => {
                 e.preventDefault();
                 handleDeleteElement(index);
               }}
+              className={`absolute
+                ${selectedIndex === index 
+              ? "outline outline-1 outline-[#226EDE]" 
+              : `hover:outline hover:outline-2 hover:outline-[#226EDE] ${element.type === "text" ? "outline outline-2 outline-gray-100" : ""}`
+            }`}
+              style={{width: element.xSize + "%", height: element.ySize + "%"}}
             >
               {element.type === "text" ? (
                 <p style={{ color: element.color, fontSize: `${element.fontSize}em` }}>
@@ -97,6 +110,15 @@ export const Slide = (props: SlideProps) => {
                   />
                 </div>
               ) : null}
+
+              {selectedIndex === index && (
+                <>
+                  <span className="absolute -top-[3px] -left-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10" />
+                  <span className="absolute -top-[3px] -right-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10" />
+                  <span className="absolute -bottom-[3px] -left-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10" />
+                  <span className="absolute -bottom-[3px] -right-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10" />
+                </>
+              )}
             </div>
           ))}
           <p className="absolute bottom-2 left-2 text-sm text-gray-500">
