@@ -2,7 +2,6 @@ import { useNavigate, useParams } from "react-router-dom"
 import { Box, Button, IconButton, Modal, TextField } from "@mui/material";
 import { FaTrashAlt, FaEdit, FaAngleLeft, FaAngleRight } from "react-icons/fa";
 import React, { useState, useEffect, useContext } from "react";
-import { MdOutlineTextFields, MdImage, MdVideocam, MdCode } from "react-icons/md";
 import { apiDeletePresentation, apiAddElement, apiDeleteElement, apiEditPresentation, apiEditTitle, apiFetchStore, apiUpdatePresentation, apiLogout } from "../api";
 import type { Presentation } from "./Dashboard";
 import ErrorContext from "../context/ErrorContext";
@@ -13,6 +12,7 @@ import { ImageModal } from "../components/ImageModal";
 import { VideoModal } from "../components/VideoModal";
 import { Slide } from "../components/Slide";
 import { SideBar } from "../components/SideBar";
+import { ToolBar } from "../components/ToolBar";
 
 type SlideElement = {
   xSize: string;
@@ -301,54 +301,19 @@ const Presentations = () => {
             handleDeleteElement={handleDeleteElement}
           />
           {openTools && (
-            <div className="absolute left-11 top-0 flex flex-col h-full w-fit bg-[#1a1a1c] shadow-xl overflow-hidden p-2.5 gap-3 border-l border-solid border-[#323232]">
-              <button 
-                className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md"
-                onClick={(e) => {
-                  e.currentTarget.blur();
-                  setCurrElement(null);
-                  setXSize("10");
-                  setYSize("10");
-                  setContent("");
-                  setFontSize("1.5");
-                  setColor("#000000");
-                  setText(true);
-                }}
-              >
-                <MdOutlineTextFields size={20} className="text-white"/>
-                Text
-              </button>
-              <button className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md"
-                onClick={(e) => {
-                  e.currentTarget.blur();
-                  setCurrElement(null);
-                  setXSize("30");
-                  setYSize("30");
-                  setContent("");
-                  setAlt("");
-                  setImage(true);
-                }}>
-                <MdImage size={20} className="text-white"/>
-                Image
-              </button>
-              <button className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md" 
-                onClick={(e) => {
-                  e.currentTarget.blur();
-                  setCurrElement(null);
-                  setXSize("30");
-                  setYSize("30");
-                  setContent("");
-                  setAutoplay(false);
-                  setVideo(true);
-                }}>
-                <MdVideocam size={20} className="text-white"/>
-                Video
-              </button>
-              <button className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md">
-                <MdCode size={20} className="text-white"/>
-                Code
-              </button>
-            </div>
+            <ToolBar 
+              setCurrElement={setCurrElement}
+              setXSize={setXSize}
+              setYSize={setYSize}
+              setContent={setContent}
+              setFontSize={setFontSize}
+              setColor={setColor}
+              setText={setText}
+              setAlt={setAlt}
+              setImage={setImage}
+              setAutoplay={setAutoplay}
+              setVideo={setVideo}
+            />
           )}
           {openSettings && (
             <div className="absolute left-11 top-0 flex flex-col h-full w-80 bg-white shadow-xl overflow-scroll">
