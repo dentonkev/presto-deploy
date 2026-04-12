@@ -16,6 +16,7 @@ type SlideElement = {
   type: string;
   fontSize?: string;
   color?: string;
+  alt?: string;
   autoplay?: boolean;
 }
 
@@ -32,7 +33,7 @@ const Presentations = () => {
   const [newName, setNewName] = useState("");
   const [name, setName] = useState("");
   const [openSettings, setOpenSettings] = useState(false);
-  const [openTools, setOpenTools] = useState(false);
+  const [openTools, setOpenTools] = useState(true);
   const [description, setDescription] = useState("");
   const [thumbnail, setThumbnail] = useState<string | ArrayBuffer | null>(null);
   const [deleteMode, setDeleteMode] = useState<'presentation' | 'slide' | null>(null);
@@ -48,10 +49,13 @@ const Presentations = () => {
   const [fontSize, setFontSize] = useState<string>("1.5"); // in em
   const [color, setColor] = useState<string>("#000000");
 
+  // Image elements
+  const [image, setImage] = useState(false);
+  const [alt, setAlt] = useState("");
+
   // Video elements
   const [video, setVideo] = useState(false);
   const [autoplay, setAutoplay] = useState(false);
-
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -72,6 +76,20 @@ const Presentations = () => {
     };
     reader.readAsDataURL(file);
   };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === "string") {
+        setContent(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }
 
   const handleSettingsSave = async () => {
     await apiEditPresentation(id, {
@@ -282,7 +300,8 @@ const Presentations = () => {
                     key={index}
                     className="element absolute border border-solid border-gray-100 break-words"
                     style={{width: element.xSize + "%", height: element.ySize + "%"}}
-                    onDoubleClick={() => {
+                    onDoubleClick={(e) => {
+                      e.preventDefault();
                       const el = slides[currentSlide].elements[index];
 
                       setCurrElement(index);
@@ -295,6 +314,10 @@ const Presentations = () => {
                         setFontSize(el.fontSize as string);
                         setColor(el.color as string);
                         setText(true);
+                        break;
+                      case "image":
+                        setAlt(el.alt ?? "")
+                        setImage(true)
                         break;
                       case "video":
                         setAutoplay(el.autoplay ?? false);
@@ -313,12 +336,14 @@ const Presentations = () => {
                       <p style={{ color: element.color, fontSize: `${element.fontSize}em` }}>
                         {element.content}
                       </p>
+                    ) : element.type === "image" ? (
+                      <img className="relative w-full h-full rounded-md flex items-center justify-center object-contain pointer-events-none select-none" src={element.content} alt={element.alt || ""}/>
                     ) : element.type === "video" ? (
                       <div
                         className="relative w-full h-full rounded-md border-4 border-slate-300 bg-white overflow-hidden hover:border-sky-400 hover:shadow-sm transition"
                       >
                         <iframe
-                          className="w-full h-full"
+                          className="w-full h-full select-none"
                           src={`${element.content}${element.autoplay ? element.content.includes("?") ? "&autoplay=1": "?autoplay=1" : ""}`}
                           allow="autoplay;"
                           allowFullScreen
@@ -351,7 +376,16 @@ const Presentations = () => {
                 <MdOutlineTextFields size={20} className="text-white"/>
                 Text
               </button>
-              <button className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md">
+              <button className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md"
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  setCurrElement(null);
+                  setXSize("30");
+                  setYSize("30");
+                  setContent("");
+                  setAlt("");
+                  setImage(true);
+                }}>
                 <MdImage size={20} className="text-white"/>
                 Image
               </button>
@@ -526,6 +560,33 @@ const Presentations = () => {
             }}
           >
             Add Video
+          </Button>
+        </Box>
+      </Modal>
+      <Modal onClose={() => setImage(false)} open={image}>
+        <Box className="absolute flex flex-col top-1/2 left-1/2 w-fit -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl gap-4">
+          <label className="text-gray-500 flex flex-col">
+            xSize (%)
+            <input type="number" min={0} max={100} className="text-black border border-[#cecece] rounded-sm p-2" value={xSize} onChange={(e) => setXSize(e.target.value)}></input>
+          </label>
+          <label className="text-gray-500 flex flex-col">
+            ySize (%)
+            <input type="number" min={0} max={100} className="text-black border border-[#cecece] rounded-sm p-2" value={ySize} onChange={(e) => setYSize(e.target.value)}></input>
+          </label>
+          <TextField label="Image URL" variant="outlined" value={content} onChange={(e) => setContent(e.target.value)}></TextField>
+          <Button variant="outlined" component="label">
+            Upload File
+            <input hidden type="file" accept="image/*" onChange={handleImageUpload}></input>
+          </Button>
+          <TextField label="Image Alternative Text" variant="outlined" value={alt} onChange={(e) => setAlt(e.target.value)}></TextField>
+          <Button 
+            size="small" 
+            className="self-end" 
+            onClick={() => {
+              handleCreateElement({xSize, ySize, content, alt, type: "image"}, setImage);
+            }}
+          >
+            Add Image
           </Button>
         </Box>
       </Modal>
