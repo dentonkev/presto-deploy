@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom"
-import { Box, Button, FormControl, IconButton, MenuItem, Modal, Select, TextField } from "@mui/material";
+import { Box, Button, IconButton, Modal, TextField } from "@mui/material";
 import { FaArrowLeft, FaTrashAlt, FaEdit, FaAngleLeft, FaAngleRight, FaBars } from "react-icons/fa";
 import React, { useState, useEffect, useContext } from "react";
 import { MdSettings, MdOutlineTextFields, MdImage, MdVideocam, MdCode } from "react-icons/md";
@@ -9,6 +9,8 @@ import ErrorContext from "../context/ErrorContext";
 import { v4 as uuidv4 } from "uuid";
 import { DeleteDialog } from "../components/DeleteModal";
 import { TextModal } from "../components/TextModal";
+import { ImageModal } from "../components/ImageModal";
+import { VideoModal } from "../components/VideoModa";
 
 type SlideElement = {
   xSize: string;
@@ -504,8 +506,8 @@ const Presentations = () => {
         </Box>
       </Modal>
       <TextModal
-        setText={setText}
         text={text}
+        setText={setText}
         xSize={xSize}
         setXSize={setXSize}
         ySize={ySize}
@@ -518,67 +520,33 @@ const Presentations = () => {
         setColor={setColor}
         handleCreateElement={handleCreateElement}
       />
-      <Modal onClose={() => setVideo(false)} open={video}>
-        <Box className="absolute flex flex-col top-1/2 left-1/2 w-fit -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl gap-4">
-          <label className="text-gray-500 flex flex-col">
-            xSize (%)
-            <input type="number" min={0} max={100} className="text-black border border-[#cecece] rounded-sm p-2" value={xSize} onChange={(e) => setXSize(e.target.value)}></input>
-          </label>
-          <label className="text-gray-500 flex flex-col">
-            ySize (%)
-            <input type="number" min={0} max={100} className="text-black border border-[#cecece] rounded-sm p-2" value={ySize} onChange={(e) => setYSize(e.target.value)}></input>
-          </label>
-          <TextField label="Video URL" variant="outlined" value={content} onChange={(e) => setContent(e.target.value)}></TextField>
-          <FormControl>
-            <label className="text-gray-500 flex flex-col">
-            Autoplay
-              <Select
-                value={autoplay ? "true" : "false"}
-                onChange={e => setAutoplay(e.target.value === "true")}
-              >
-                <MenuItem value="true">True</MenuItem>
-                <MenuItem value="false">False</MenuItem>
-              </Select>
-            </label>
-          </FormControl>
-          <Button 
-            size="small" 
-            className="self-end" 
-            onClick={() => {
-              handleCreateElement({xSize, ySize, content, autoplay, type: "video"}, setVideo);
-            }}
-          >
-            Add Video
-          </Button>
-        </Box>
-      </Modal>
-      <Modal onClose={() => setImage(false)} open={image}>
-        <Box className="absolute flex flex-col top-1/2 left-1/2 w-fit -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl gap-4">
-          <label className="text-gray-500 flex flex-col">
-            xSize (%)
-            <input type="number" min={0} max={100} className="text-black border border-[#cecece] rounded-sm p-2" value={xSize} onChange={(e) => setXSize(e.target.value)}></input>
-          </label>
-          <label className="text-gray-500 flex flex-col">
-            ySize (%)
-            <input type="number" min={0} max={100} className="text-black border border-[#cecece] rounded-sm p-2" value={ySize} onChange={(e) => setYSize(e.target.value)}></input>
-          </label>
-          <TextField label="Image URL" variant="outlined" value={content} onChange={(e) => setContent(e.target.value)}></TextField>
-          <Button variant="outlined" component="label">
-            Upload File
-            <input hidden type="file" accept="image/*" onChange={handleImageUpload}></input>
-          </Button>
-          <TextField label="Image Alternative Text" variant="outlined" value={alt} onChange={(e) => setAlt(e.target.value)}></TextField>
-          <Button 
-            size="small" 
-            className="self-end" 
-            onClick={() => {
-              handleCreateElement({xSize, ySize, content, alt, type: "image"}, setImage);
-            }}
-          >
-            Add Image
-          </Button>
-        </Box>
-      </Modal>
+      <ImageModal 
+        image={image}
+        setImage={setImage}
+        xSize={xSize}
+        setXSize={setXSize}
+        ySize={ySize}
+        setYSize={setYSize}
+        content={content}
+        setContent={setContent}
+        alt={alt}
+        setAlt={setAlt}
+        handleImageUpload={handleImageUpload}
+        handleCreateElement={handleCreateElement}
+      />
+      <VideoModal 
+        video={video}
+        setVideo={setVideo}
+        xSize={xSize}
+        setXSize={setXSize}
+        ySize={ySize}
+        setYSize={setYSize}
+        content={content}
+        setContent={setContent}
+        autoplay={autoplay}
+        setAutoplay={setAutoplay}
+        handleCreateElement={handleCreateElement}
+      />
     </>
   );
 }

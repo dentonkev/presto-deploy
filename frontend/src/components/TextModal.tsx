@@ -1,8 +1,8 @@
 import { Box, Button, Modal, TextField } from "@mui/material";
 
 export interface SimpleDialogProps {
-  setText: (_val: boolean) => void;
   text: boolean;
+  setText: (_val: boolean) => void;
   xSize: string;
   setXSize: (_val: string) => void;
   ySize: string;
@@ -17,7 +17,7 @@ export interface SimpleDialogProps {
 }
 
 export const TextModal = (props: SimpleDialogProps) => {
-  const { setText, text, xSize, setXSize, ySize, setYSize, content, setContent, fontSize, setFontSize, color, setColor, handleCreateElement } = props;
+  const { text, setText, xSize, setXSize, ySize, setYSize, content, setContent, fontSize, setFontSize, color, setColor, handleCreateElement } = props;
   return (
     <Modal onClose={() => setText(false)} open={text}>
       <Box className="absolute flex flex-col top-1/2 left-1/2 w-fit -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl gap-4">
