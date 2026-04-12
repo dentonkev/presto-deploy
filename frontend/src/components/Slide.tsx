@@ -1,4 +1,6 @@
 import type { SlideData, SlideElement } from "../pages/Presentations";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 export interface SlideProps {
   slides: SlideData[];
@@ -14,6 +16,7 @@ export interface SlideProps {
   setImage: (_value: boolean) => void;
   setAutoplay: (_value: boolean) => void;
   setVideo: (_value: boolean) => void;
+  setCode: (_value: boolean) => void;
   handleDeleteElement: (_index: number) => void;
 }
 
@@ -32,8 +35,16 @@ export const Slide = (props: SlideProps) => {
     setImage,
     setAutoplay,
     setVideo,
+    setCode,
     handleDeleteElement,
   } = props;
+
+  const detectLanguage = (code: string) => {
+    if (/#include|printf|scanf|int main|malloc/.test(code)) return "c";
+    if (/def |import |print\(|elif |None|True|False/.test(code)) return "python";
+    if (/console\.log|function|=>|let |const |var |===/.test(code)) return "javascript";
+    return "javascript";
+  };
 
   return (
     <div className="flex-1 flex items-center justify-center align-center bg-white">
@@ -70,6 +81,10 @@ export const Slide = (props: SlideProps) => {
                   setAutoplay(el.autoplay ?? false);
                   setVideo(true);
                   break;
+                case "code":
+                  setFontSize(el.fontSize as string);
+                  setCode(true);
+                  break;
                 default:
                   break;
                 }
@@ -80,9 +95,11 @@ export const Slide = (props: SlideProps) => {
               }}
             >
               {element.type === "text" ? (
-                <p style={{ color: element.color, fontSize: `${element.fontSize}em` }}>
-                  {element.content}
-                </p>
+                <div className="overflow-scroll [scrollbar-width:none] [-ms-overflow-style:none] hover:[scrollbar-width:thin] hover:[-ms-overflow-style:thin] w-full h-full">
+                  <p style={{ color: element.color, fontSize: `${element.fontSize}em` }}>
+                    {element.content}
+                  </p>
+                </div>
               ) : element.type === "image" ? (
                 <img className="relative w-full h-full rounded-md flex items-center justify-center object-contain pointer-events-none select-none" src={element.content} alt={element.alt || ""}/>
               ) : element.type === "video" ? (
@@ -95,6 +112,24 @@ export const Slide = (props: SlideProps) => {
                     allow="autoplay;"
                     allowFullScreen
                   />
+                </div>
+              ) : element.type === "code" ? (
+                <div
+                  className="relative w-full h-full bg-[#1e1e1e] overflow-scroll [scrollbar-width:none] [-ms-overflow-style:none] transition text-white whitespace-nowrap"
+                  style={{ scrollbarWidth: "thin", scrollbarColor: "grey #1e1e1e" }}
+                >
+                  <SyntaxHighlighter
+                    language={detectLanguage(element.content)}
+                    style={vscDarkPlus}
+                    showLineNumbers
+                    wrapLines
+                    lineNumberStyle={{
+                      color: "#708586",
+                      minWidth: "2.5em",
+                    }}
+                  >
+                    {element.content}
+                  </SyntaxHighlighter>
                 </div>
               ) : null}
             </div>

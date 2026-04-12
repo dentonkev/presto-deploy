@@ -33,6 +33,7 @@ export const TextModal = (props: TextModalProps) => {
         <TextField label="Font Size" type="number" variant="outlined" value={fontSize} onChange={(e) => setFontSize(e.target.value)}></TextField>
         <label className="text-gray-500 flex flex-col">
             Text Colour
+          <input className="text-black border border-solid border-[#cecece] p-1 my-1 w-fit rounded-sm" type="text" value={color} onChange={(e) => setColor(e.target.value)}></input>
           <input type="color" value={color} onChange={(e) => setColor(e.target.value)}></input>
         </label>
         <Button 
