@@ -264,6 +264,16 @@ const Presentations = () => {
     }
   };
 
+  const handleMoveComplete = async () => {
+    try {
+      await apiUpdatePresentation(id, slides);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        showError(err.message); 
+      }
+    }
+  }
+
   useEffect(() => {
     const loadSlides = async () => {
       const data = await apiFetchStore();
@@ -341,6 +351,7 @@ const Presentations = () => {
             setCode={setCode}
             handleDeleteElement={handleDeleteElement}
             handleMoveElement={handleMoveElement}
+            handleMoveComplete={handleMoveComplete}
           />
           {openTools && (
             <ToolBar 
