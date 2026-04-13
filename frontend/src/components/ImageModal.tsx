@@ -1,4 +1,5 @@
 import { Box, Button, Modal, TextField } from "@mui/material";
+import type { SlideElement } from "../pages/Presentations";
 import React from "react";
 
 export interface ImageModalProps {
@@ -7,17 +8,19 @@ export interface ImageModalProps {
   xSize: string;
   setXSize: (_val: string) => void;
   ySize: string;
+  xPos: string;
+  yPos: string;
   setYSize: (_val: string) => void;
   content: string;
   setContent: (_val: string) => void;
   alt: string;
   setAlt: (_val: string) => void;
   handleImageUpload: (_e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleCreateElement: (_val: {xSize: string, ySize: string, content: string, alt: string, type: string}, _callback: (_val: boolean) => void) => void;
+  handleCreateElement: (_val: SlideElement, _callback: (_val: boolean) => void) => void;
 }
 
 export const ImageModal = (props: ImageModalProps) => {
-  const { image, setImage, xSize, setXSize, ySize, setYSize, content, setContent, alt, setAlt, handleImageUpload, handleCreateElement } = props;
+  const { image, setImage, xSize, setXSize, ySize, setYSize, xPos, yPos, content, setContent, alt, setAlt, handleImageUpload, handleCreateElement } = props;
   return (
     <Modal onClose={() => setImage(false)} open={image}>
       <Box className="absolute flex flex-col top-1/2 left-1/2 w-fit -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl gap-4">
@@ -39,7 +42,7 @@ export const ImageModal = (props: ImageModalProps) => {
           size="small" 
           className="self-end" 
           onClick={() => {
-            handleCreateElement({xSize, ySize, content, alt, type: "image"}, setImage);
+            handleCreateElement({xSize, ySize, xPos, yPos, content, alt, type: "image"}, setImage);
           }}
         >
             Add Image

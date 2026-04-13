@@ -4,6 +4,8 @@ export interface ToolBarProps {
   setCurrElement: (_index: number | null) => void;
   setXSize: (_value: string) => void;
   setYSize: (_value: string) => void;
+  setXPos: (_value: string) => void;
+  setYPos: (_value: string) => void;
   setContent: (_value: string) => void;
   setFontSize: (_value: string) => void;
   setColor: (_value: string) => void;
@@ -15,7 +17,7 @@ export interface ToolBarProps {
 }
 
 export const ToolBar = (props: ToolBarProps) => {
-  const { setCurrElement, setXSize, setYSize, setContent, setFontSize, setColor, setText, setAlt, setImage, setAutoplay, setVideo } = props;
+  const { setCurrElement, setXSize, setYSize, setXPos, setYPos, setContent, setFontSize, setColor, setText, setAlt, setImage, setAutoplay, setVideo } = props;
 
   return (
     <div className="absolute left-11 top-0 flex flex-col h-full w-fit bg-[#1a1a1c] shadow-xl overflow-hidden p-2.5 gap-3 border-l border-solid border-[#323232]">
@@ -26,6 +28,8 @@ export const ToolBar = (props: ToolBarProps) => {
           setCurrElement(null);
           setXSize("10");
           setYSize("10");
+          setXPos("0");
+          setYPos("0");
           setContent("");
           setFontSize("1.5");
           setColor("#000000");
@@ -41,6 +45,8 @@ export const ToolBar = (props: ToolBarProps) => {
           setCurrElement(null);
           setXSize("30");
           setYSize("30");
+          setXPos("0");
+          setYPos("0");
           setContent("");
           setAlt("");
           setImage(true);
@@ -54,6 +60,8 @@ export const ToolBar = (props: ToolBarProps) => {
           setCurrElement(null);
           setXSize("30");
           setYSize("30");
+          setXPos("0");
+          setYPos("0");
           setContent("");
           setAutoplay(false);
           setVideo(true);

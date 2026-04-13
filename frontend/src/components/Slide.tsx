@@ -7,6 +7,8 @@ export interface SlideProps {
   setCurrElement: (_value: number | null) => void;
   setXSize: (_value: string) => void;
   setYSize: (_value: string) => void;
+  setXPos: (_value: string) => void;
+  setYPos: (_value: string) => void;
   setContent: (_value: string) => void;
   setFontSize: (_value: string) => void;
   setColor: (_value: string) => void;
@@ -16,6 +18,7 @@ export interface SlideProps {
   setAutoplay: (_value: boolean) => void;
   setVideo: (_value: boolean) => void;
   handleDeleteElement: (_index: number) => void;
+  handleMoveElement: (_index: number, _xPos: string, _yPos: string) => void
 }
 
 export const Slide = (props: SlideProps) => {
@@ -25,6 +28,8 @@ export const Slide = (props: SlideProps) => {
     setCurrElement,
     setXSize,
     setYSize,
+    setXPos, 
+    setYPos,
     setContent,
     setFontSize,
     setColor,
@@ -34,6 +39,7 @@ export const Slide = (props: SlideProps) => {
     setAutoplay,
     setVideo,
     handleDeleteElement,
+    handleMoveElement
   } = props;
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -45,6 +51,8 @@ export const Slide = (props: SlideProps) => {
     setCurrElement(index);
     setXSize(el.xSize);
     setYSize(el.ySize);
+    setXPos(el.xPos);
+    setYPos(el.yPos);
     setContent(el.content);
             
     switch(el.type) {
@@ -90,7 +98,12 @@ export const Slide = (props: SlideProps) => {
               ? "outline outline-1 outline-[#226EDE]" 
               : `hover:outline hover:outline-2 hover:outline-[#226EDE] ${element.type === "text" ? "outline outline-2 outline-gray-100" : ""}`
             }`}
-              style={{width: element.xSize + "%", height: element.ySize + "%"}}
+              style={{
+                width: element.xSize + "%", 
+                height: element.ySize + "%", 
+                left: (element.xPos ?? "0") + "%", 
+                top: (element.yPos ?? "0") + "%"
+              }}
             >
               {element.type === "text" ? (
                 <p style={{ color: element.color, fontSize: `${element.fontSize}em` }}>

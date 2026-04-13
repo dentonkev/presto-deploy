@@ -1,4 +1,5 @@
 import { Box, Button, FormControl, MenuItem, Modal, Select, TextField } from "@mui/material";
+import type { SlideElement } from "../pages/Presentations";
 
 export interface VideoModalProps {
   video: boolean;
@@ -6,16 +7,18 @@ export interface VideoModalProps {
   xSize: string;
   setXSize: (_val: string) => void;
   ySize: string;
+  xPos: string;
+  yPos: string;
   setYSize: (_val: string) => void;
   content: string;
   setContent: (_val: string) => void;
   autoplay: boolean;
   setAutoplay: (_val: boolean) => void;
-  handleCreateElement: (_val: {xSize: string, ySize: string, content: string, autoplay: boolean, type: string}, _callback: (_val: boolean) => void) => void;
+  handleCreateElement: (_val: SlideElement, _callback: (_val: boolean) => void) => void;
 }
 
 export const VideoModal = (props: VideoModalProps) => {
-  const { video, setVideo, xSize, setXSize, ySize, setYSize, content, setContent, autoplay, setAutoplay, handleCreateElement } = props;
+  const { video, setVideo, xSize, setXSize, ySize, setYSize, xPos, yPos, content, setContent, autoplay, setAutoplay, handleCreateElement } = props;
   return (
     <Modal onClose={() => setVideo(false)} open={video}>
       <Box className="absolute flex flex-col top-1/2 left-1/2 w-fit -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl gap-4">
@@ -44,7 +47,7 @@ export const VideoModal = (props: VideoModalProps) => {
           size="small" 
           className="self-end" 
           onClick={() => {
-            handleCreateElement({xSize, ySize, content, autoplay, type: "video"}, setVideo);
+            handleCreateElement({xSize, ySize, xPos, yPos, content, autoplay, type: "video"}, setVideo);
           }}
         >
             Add Video

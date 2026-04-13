@@ -19,6 +19,8 @@ import { RightSideBar } from "../components/RightSideBar";
 export type SlideElement = {
   xSize: string;
   ySize: string;
+  xPos: string; 
+  yPos: string;
   content: string;
   type: string;
   fontSize?: string;
@@ -49,6 +51,8 @@ const Presentations = () => {
   const [currElement, setCurrElement] = useState<number | null>(null);
   const [xSize, setXSize] = useState("10");
   const [ySize, setYSize] = useState("10");
+  const [xPos, setXPos] = useState("0");
+  const [yPos, setYPos] = useState("0");
   const [content, setContent] = useState("");
 
   // Text elements
@@ -230,6 +234,31 @@ const Presentations = () => {
     setOpenDelete(true);
   };
 
+  const handleMoveElement = async (index: number, newXPos: string, newYPos: string) => {
+    setSlides((prev) => {
+      if (!prev[currentSlide] || !prev[currentSlide].elements[index]) return prev;
+
+      const updated = [...prev];
+      const slide = {...updated[currentSlide]};
+      const elements = [...slide.elements];
+
+      elements[index] = {
+        ...elements[index],
+        xPos: newXPos,
+        yPos: newYPos,
+      }
+
+      slide.elements = elements;
+      updated[currentSlide] = slide;
+      return updated;
+    });
+
+    if (currElement === index) {
+      setXPos(newXPos);
+      setYPos(newYPos);
+    }
+  };
+
   useEffect(() => {
     const loadSlides = async () => {
       const data = await apiFetchStore();
@@ -292,6 +321,8 @@ const Presentations = () => {
             setCurrElement={setCurrElement}
             setXSize={setXSize}
             setYSize={setYSize}
+            setXPos={setXPos}
+            setYPos={setYPos}
             setContent={setContent}
             setFontSize={setFontSize}
             setColor={setColor}
@@ -301,12 +332,15 @@ const Presentations = () => {
             setAutoplay={setAutoplay}
             setVideo={setVideo}
             handleDeleteElement={handleDeleteElement}
+            handleMoveElement={handleMoveElement}
           />
           {openTools && (
             <ToolBar 
               setCurrElement={setCurrElement}
               setXSize={setXSize}
               setYSize={setYSize}
+              setXPos={setXPos}
+              setYPos={setYPos}
               setContent={setContent}
               setFontSize={setFontSize}
               setColor={setColor}
@@ -390,6 +424,8 @@ const Presentations = () => {
         setXSize={setXSize}
         ySize={ySize}
         setYSize={setYSize}
+        xPos={xPos}
+        yPos={yPos}
         content={content}
         setContent={setContent}
         fontSize={fontSize}
@@ -405,6 +441,8 @@ const Presentations = () => {
         setXSize={setXSize}
         ySize={ySize}
         setYSize={setYSize}
+        xPos={xPos}
+        yPos={yPos}
         content={content}
         setContent={setContent}
         alt={alt}
@@ -419,6 +457,8 @@ const Presentations = () => {
         setXSize={setXSize}
         ySize={ySize}
         setYSize={setYSize}
+        xPos={xPos}
+        yPos={yPos}
         content={content}
         setContent={setContent}
         autoplay={autoplay}
