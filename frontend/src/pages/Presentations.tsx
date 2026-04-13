@@ -15,6 +15,7 @@ import { SideBar } from "../components/SideBar";
 import { ToolBar } from "../components/ToolBar";
 import { Settings } from "../components/Settings";
 import { RightSideBar } from "../components/RightSideBar";
+import { CodeModal } from "../components/CodeModal";
 
 export type SlideElement = {
   xSize: string;
@@ -27,6 +28,7 @@ export type SlideElement = {
   color?: string;
   alt?: string;
   autoplay?: boolean;
+  language?: "c" | "python" | "javascript";
 }
 
 export type SlideData = {
@@ -57,7 +59,7 @@ const Presentations = () => {
 
   // Text elements
   const [text, setText] = useState(false);
-  const [fontSize, setFontSize] = useState<string>("1.5"); // in em
+  const [fontSize, setFontSize] = useState<string>("1"); // in em
   const [color, setColor] = useState<string>("#000000");
 
   // Image elements
@@ -67,6 +69,9 @@ const Presentations = () => {
   // Video elements
   const [video, setVideo] = useState(false);
   const [autoplay, setAutoplay] = useState(false);
+
+  // Code elements
+  const [code, setCode] = useState(false);
 
   // Delete Dialog config
   const deleteDialogTitle = deleteMode === "presentation" ? "You are deleting the full presentation." : "This slide will be permanently removed.";
@@ -276,6 +281,8 @@ const Presentations = () => {
 
   useEffect(() => {
     const handleArrowKeyDown = (event: KeyboardEvent) => {
+      if (text || video || image || code) return;
+
       if (event.key === "ArrowRight" && slides.length > 1 && currentSlide !== (slides.length - 1)) {
         setCurrentSlide(currentSlide + 1)
       } else if (event.key === "ArrowLeft" && slides.length > 1 && currentSlide !== 0) {
@@ -286,7 +293,7 @@ const Presentations = () => {
     return () => {
       window.removeEventListener("keydown", handleArrowKeyDown);
     };
-  }, [currentSlide, slides.length]);
+  }, [currentSlide, slides.length, text, video, image, code]);
 
   return (
     <>
@@ -331,6 +338,7 @@ const Presentations = () => {
             setImage={setImage}
             setAutoplay={setAutoplay}
             setVideo={setVideo}
+            setCode={setCode}
             handleDeleteElement={handleDeleteElement}
             handleMoveElement={handleMoveElement}
           />
@@ -349,6 +357,7 @@ const Presentations = () => {
               setImage={setImage}
               setAutoplay={setAutoplay}
               setVideo={setVideo}
+              setCode={setCode}
             />
           )}
           {openSettings && (
@@ -463,6 +472,19 @@ const Presentations = () => {
         setContent={setContent}
         autoplay={autoplay}
         setAutoplay={setAutoplay}
+        handleCreateElement={handleCreateElement}
+      />
+      <CodeModal
+        code={code}
+        setCode={setCode}
+        xSize={xSize}
+        setXSize={setXSize}
+        ySize={ySize}
+        setYSize={setYSize}
+        content={content}
+        setContent={setContent}
+        fontSize={fontSize}
+        setFontSize={setFontSize}
         handleCreateElement={handleCreateElement}
       />
     </>
