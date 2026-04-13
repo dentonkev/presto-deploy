@@ -481,6 +481,8 @@ const Presentations = () => {
         setXSize={setXSize}
         ySize={ySize}
         setYSize={setYSize}
+        xPos={xPos}
+        yPos={yPos}
         content={content}
         setContent={setContent}
         fontSize={fontSize}
