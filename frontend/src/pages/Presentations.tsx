@@ -234,7 +234,7 @@ const Presentations = () => {
     setOpenDelete(true);
   };
 
-  const handleMoveElement = async (index: number, newXPos: string, newYPos: string) => {
+  const handleMoveElement = (index: number, newXPos: string, newYPos: string) => {
     setSlides((prev) => {
       if (!prev[currentSlide] || !prev[currentSlide].elements[index]) return prev;
 

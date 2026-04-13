@@ -1,5 +1,5 @@
 import type { SlideData, SlideElement } from "../pages/Presentations";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 export interface SlideProps {
   slides: SlideData[];
@@ -20,6 +20,18 @@ export interface SlideProps {
   handleDeleteElement: (_index: number) => void;
   handleMoveElement: (_index: number, _xPos: string, _yPos: string) => void
 }
+
+type DragData = {
+  index: number;
+  mouseX: number;
+  mouseY: number;
+  xPos: number;
+  yPos: number;
+  maxX: number;
+  maxY: number;
+  slideWidth: number;
+  slideHeight: number;
+};
 
 export const Slide = (props: SlideProps) => {
   const {
@@ -43,6 +55,74 @@ export const Slide = (props: SlideProps) => {
   } = props;
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  const slideRef = useRef<HTMLDivElement | null>(null);
+  const dragRef = useRef<DragData | null>(null);
+  const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!dragRef.current) return;
+
+      const { 
+        index,
+        mouseX,
+        mouseY,
+        xPos,
+        yPos,
+        maxX,
+        maxY,
+        slideWidth,
+        slideHeight
+      } = dragRef.current;
+
+      if (slideWidth === 0 || slideHeight === 0) return;
+
+      const xPixelsChange = event.clientX - mouseX;
+      const yPixelsChange = event.clientY - mouseY;
+
+      const newXPos = clamp(xPos + xPixelsChange / slideWidth * 100, 0, maxX)
+      const newYPos = clamp(yPos + yPixelsChange / slideHeight * 100, 0, maxY)
+
+      handleMoveElement(index, newXPos.toFixed(2), newYPos.toFixed(2));
+    };
+
+    const handleMouseUp = () => {
+      dragRef.current = null;
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    }
+
+  }, [handleMoveElement])
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>, element: SlideElement, index: number) => {
+    // left click
+    if (e.button !== 0) return;
+
+    const rect = slideRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    dragRef.current = {
+      index,
+      mouseX: e.clientX,
+      mouseY: e.clientY,
+      xPos: Number(element.xPos),
+      yPos: Number(element.yPos),
+      maxX: Math.max(0, 100 - Number(element.xSize)),
+      maxY: Math.max(0, 100 - Number(element.ySize)),
+      slideWidth: rect.width,
+      slideHeight: rect.height
+    }
+
+    setSelectedIndex(index);
+    e.stopPropagation();
+  }
 
   const handleDoubleClick = (e: React.MouseEvent<HTMLDivElement>, index: number) => {
     e.preventDefault();
@@ -79,11 +159,12 @@ export const Slide = (props: SlideProps) => {
       {slides.length === 0 ? (
         <p>No slides available</p>
       ) : (
-        <div key={slides[currentSlide].id} className="relative w-full max-w-5xl aspect-video bg-white flex border border-dotted border-gray-300 m-3">
+        <div ref={slideRef} key={slides[currentSlide].id} className="relative w-full max-w-5xl aspect-video bg-white flex border border-dotted border-gray-300 m-3">
           {/* 2.3 Adding elements to slides */}
           {slides[currentSlide].elements?.map((element: SlideElement, index) => (
             <div
               key={index}
+              onMouseDown={(e) => handleMouseDown(e, element, index)}
               onClick={(e) => {
                 setSelectedIndex(index); 
                 e.stopPropagation();
@@ -95,7 +176,7 @@ export const Slide = (props: SlideProps) => {
               }}
               className={`absolute
                 ${selectedIndex === index 
-              ? "outline outline-1 outline-[#226EDE]" 
+              ? "outline outline-1 outline-[#226EDE] cursor-grab" 
               : `hover:outline hover:outline-2 hover:outline-[#226EDE] ${element.type === "text" ? "outline outline-2 outline-gray-100" : ""}`
             }`}
               style={{
