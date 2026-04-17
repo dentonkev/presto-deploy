@@ -6,9 +6,7 @@ export interface CodeModalProps {
   code: boolean;
   setCode: (_val: boolean) => void;
   xSize: string;
-  setXSize: (_val: string) => void;
   ySize: string;
-  setYSize: (_val: string) => void;
   xPos: string;
   yPos: string;
   content: string;
@@ -19,7 +17,7 @@ export interface CodeModalProps {
 }
 
 export const CodeModal = (props: CodeModalProps) => {
-  const { code, setCode, xSize, setXSize, ySize, setYSize, xPos, yPos, content, setContent, fontSize, setFontSize, handleCreateElement } = props;
+  const { code, setCode, xSize, ySize, xPos, yPos, content, setContent, fontSize, setFontSize, handleCreateElement } = props;
   return (
     <Modal onClose={() => setCode(false)} open={code}>
       <Box className="absolute flex flex-col top-1/2 left-1/2 w-[1200px] max-w-[98%] h-[750px] max-h-[98%] m-auto -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-1 shadow-xl gap-1">
@@ -41,14 +39,6 @@ export const CodeModal = (props: CodeModalProps) => {
           </div>
         </div>
         <div className="flex gap-3 px-4">
-          <label className="text-gray-500 flex flex-col">
-            Width (%)
-            <input type="number" min={0} max={100} className="text-black border border-[#cecece] rounded-sm p-0.5" value={xSize} onChange={(e) => setXSize(e.target.value)}></input>
-          </label>
-          <label className="text-gray-500 flex flex-col">
-            Height (%)
-            <input type="number" min={0} max={100} className="text-black border border-[#cecece] rounded-sm p-0.5" value={ySize} onChange={(e) => setYSize(e.target.value)}></input>
-          </label>
           <label className="text-gray-500 flex flex-col">
             Font Size
             <input type="number" className="text-black border border-[#cecece] rounded-sm p-0.5" value={fontSize} onChange={(e) => setFontSize(e.target.value)}></input>

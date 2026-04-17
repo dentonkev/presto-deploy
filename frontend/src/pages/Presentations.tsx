@@ -441,9 +441,7 @@ const Presentations = () => {
         text={text}
         setText={setText}
         xSize={xSize}
-        setXSize={setXSize}
         ySize={ySize}
-        setYSize={setYSize}
         xPos={xPos}
         yPos={yPos}
         content={content}
@@ -458,9 +456,7 @@ const Presentations = () => {
         image={image}
         setImage={setImage}
         xSize={xSize}
-        setXSize={setXSize}
         ySize={ySize}
-        setYSize={setYSize}
         xPos={xPos}
         yPos={yPos}
         content={content}
@@ -474,9 +470,7 @@ const Presentations = () => {
         video={video}
         setVideo={setVideo}
         xSize={xSize}
-        setXSize={setXSize}
         ySize={ySize}
-        setYSize={setYSize}
         xPos={xPos}
         yPos={yPos}
         content={content}
@@ -489,9 +483,7 @@ const Presentations = () => {
         code={code}
         setCode={setCode}
         xSize={xSize}
-        setXSize={setXSize}
         ySize={ySize}
-        setYSize={setYSize}
         xPos={xPos}
         yPos={yPos}
         content={content}

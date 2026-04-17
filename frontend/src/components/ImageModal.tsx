@@ -6,11 +6,9 @@ export interface ImageModalProps {
   image: boolean;
   setImage: (_val: boolean) => void;
   xSize: string;
-  setXSize: (_val: string) => void;
   ySize: string;
   xPos: string;
   yPos: string;
-  setYSize: (_val: string) => void;
   content: string;
   setContent: (_val: string) => void;
   alt: string;
@@ -20,18 +18,10 @@ export interface ImageModalProps {
 }
 
 export const ImageModal = (props: ImageModalProps) => {
-  const { image, setImage, xSize, setXSize, ySize, setYSize, xPos, yPos, content, setContent, alt, setAlt, handleImageUpload, handleCreateElement } = props;
+  const { image, setImage, xSize, ySize, xPos, yPos, content, setContent, alt, setAlt, handleImageUpload, handleCreateElement } = props;
   return (
     <Modal onClose={() => setImage(false)} open={image}>
       <Box className="absolute flex flex-col top-1/2 left-1/2 w-fit -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl gap-4">
-        <label className="text-gray-500 flex flex-col">
-            xSize (%)
-          <input type="number" min={0} max={100} className="text-black border border-[#cecece] rounded-sm p-2" value={xSize} onChange={(e) => setXSize(e.target.value)}></input>
-        </label>
-        <label className="text-gray-500 flex flex-col">
-            ySize (%)
-          <input type="number" min={0} max={100} className="text-black border border-[#cecece] rounded-sm p-2" value={ySize} onChange={(e) => setYSize(e.target.value)}></input>
-        </label>
         <TextField label="Image URL" variant="outlined" value={content} onChange={(e) => setContent(e.target.value)}></TextField>
         <Button variant="outlined" component="label">
             Upload File
