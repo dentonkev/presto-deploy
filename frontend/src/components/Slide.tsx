@@ -22,7 +22,8 @@ export interface SlideProps {
   setCode: (_value: boolean) => void;
   handleDeleteElement: (_index: number) => void;
   handleMoveElement: (_index: number, _xPos: string, _yPos: string) => void;
-  handleMoveComplete: () => void;
+  handleResizeElement: (_index: number, _XPos: string, _YPos: string, _XSize: string, _YSize: string) => void;
+  handleInteractionComplete: () => void;
 }
 
 type DragData = {
@@ -57,7 +58,7 @@ export const Slide = (props: SlideProps) => {
     setCode,
     handleDeleteElement,
     handleMoveElement,
-    handleMoveComplete,
+    handleInteractionComplete,
   } = props;
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -94,7 +95,7 @@ export const Slide = (props: SlideProps) => {
     };
 
     const handleMouseUp = () => {
-      if (dragRef.current) handleMoveComplete();
+      if (dragRef.current) handleInteractionComplete();
       dragRef.current = null;
     };
 
@@ -106,7 +107,7 @@ export const Slide = (props: SlideProps) => {
       window.removeEventListener("mouseup", handleMouseUp);
     }
 
-  }, [handleMoveElement, handleMoveComplete])
+  }, [handleMoveElement, handleInteractionComplete])
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>, element: SlideElement, index: number) => {
     // left click

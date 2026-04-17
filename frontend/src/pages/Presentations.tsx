@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom"
 import { Box, Button, IconButton, Modal, TextField } from "@mui/material";
 import { FaEdit, FaAngleLeft, FaAngleRight } from "react-icons/fa";
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { apiDeletePresentation, apiAddElement, apiDeleteElement, apiEditPresentation, apiEditTitle, apiFetchStore, apiUpdatePresentation, apiLogout } from "../api";
 import type { Presentation } from "./Dashboard";
 import ErrorContext from "../context/ErrorContext";
@@ -40,6 +40,7 @@ const Presentations = () => {
   const [openDelete, setOpenDelete] = useState(false);
   const [openTitle, setOpenTitle] = useState(false);
   const [slides, setSlides] = useState<SlideData[]>([]);
+  const slidesRef = useRef<SlideData[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0)
   const [newName, setNewName] = useState("");
   const [name, setName] = useState("");
@@ -264,15 +265,48 @@ const Presentations = () => {
     }
   };
 
-  const handleMoveComplete = async () => {
+  const handleInteractionComplete = async () => {
     try {
-      await apiUpdatePresentation(id, slides);
+      await apiUpdatePresentation(id, slidesRef.current);
     } catch (err: unknown) {
       if (err instanceof Error) {
         showError(err.message); 
       }
     }
-  }
+  };
+
+  const handleResizeElement = (index: number, newXPos: string, newYPos: string, newXSize: string, newYSize: string) => {
+    setSlides((prev) => {
+      if (!prev[currentSlide] || !prev[currentSlide].elements[index]) return prev;
+
+      const updated = [...prev];
+      const slide = {...updated[currentSlide]};
+      const elements = [...slide.elements];
+
+      elements[index] = {
+        ...elements[index],
+        xSize: newXSize,
+        ySize: newYSize,
+        xPos: newXPos,
+        yPos: newYPos,
+      }
+
+      slide.elements = elements;
+      updated[currentSlide] = slide;
+      return updated;
+    });
+
+    if (currElement === index) {
+      setXSize(newXSize);
+      setYSize(newYSize);
+      setXPos(newXPos);
+      setYPos(newYPos);
+    }
+  };
+
+  useEffect(() => {
+    slidesRef.current = slides;
+  }, [slides]);
 
   useEffect(() => {
     const loadSlides = async () => {
@@ -351,7 +385,8 @@ const Presentations = () => {
             setCode={setCode}
             handleDeleteElement={handleDeleteElement}
             handleMoveElement={handleMoveElement}
-            handleMoveComplete={handleMoveComplete}
+            handleResizeElement={handleResizeElement}
+            handleInteractionComplete={handleInteractionComplete}
           />
           {openTools && (
             <ToolBar 
