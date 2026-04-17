@@ -1,5 +1,6 @@
 import { Box, Button, Modal } from "@mui/material";
 import type React from "react";
+import type { SlideElement } from "../pages/Presentations";
 
 export interface CodeModalProps {
   code: boolean;
@@ -8,15 +9,17 @@ export interface CodeModalProps {
   setXSize: (_val: string) => void;
   ySize: string;
   setYSize: (_val: string) => void;
+  xPos: string;
+  yPos: string;
   content: string;
   setContent: React.Dispatch<React.SetStateAction<string>>;
   fontSize: string;
   setFontSize: (_val: string) => void;
-  handleCreateElement: (_val: {xSize: string, ySize: string, content: string, fontSize: string, type: string}, _callback: (_val: boolean) => void) => void;
+  handleCreateElement: (_val: SlideElement, _callback: (_val: boolean) => void) => void;
 }
 
 export const CodeModal = (props: CodeModalProps) => {
-  const { code, setCode, xSize, setXSize, ySize, setYSize, content, setContent, fontSize, setFontSize, handleCreateElement } = props;
+  const { code, setCode, xSize, setXSize, ySize, setYSize, xPos, yPos, content, setContent, fontSize, setFontSize, handleCreateElement } = props;
   return (
     <Modal onClose={() => setCode(false)} open={code}>
       <Box className="absolute flex flex-col top-1/2 left-1/2 w-[1200px] max-w-[98%] h-[750px] max-h-[98%] m-auto -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-1 shadow-xl gap-1">
@@ -30,7 +33,7 @@ export const CodeModal = (props: CodeModalProps) => {
               variant="contained" 
               size="small"
               onClick={() => {
-                handleCreateElement({xSize, ySize, content, fontSize, type: "code"}, setCode);
+                handleCreateElement({xSize, ySize, xPos, yPos, content, fontSize, type: "code"}, setCode);
               }}
             >
               Save

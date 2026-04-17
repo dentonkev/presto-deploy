@@ -1,4 +1,5 @@
 import type { SlideData, SlideElement } from "../pages/Presentations";
+import React, { useEffect, useRef, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 
@@ -8,6 +9,8 @@ export interface SlideProps {
   setCurrElement: (_value: number | null) => void;
   setXSize: (_value: string) => void;
   setYSize: (_value: string) => void;
+  setXPos: (_value: string) => void;
+  setYPos: (_value: string) => void;
   setContent: (_value: string) => void;
   setFontSize: (_value: string) => void;
   setColor: (_value: string) => void;
@@ -18,7 +21,21 @@ export interface SlideProps {
   setVideo: (_value: boolean) => void;
   setCode: (_value: boolean) => void;
   handleDeleteElement: (_index: number) => void;
+  handleMoveElement: (_index: number, _xPos: string, _yPos: string) => void;
+  handleMoveComplete: () => void;
 }
+
+type DragData = {
+  index: number;
+  mouseX: number;
+  mouseY: number;
+  xPos: number;
+  yPos: number;
+  maxX: number;
+  maxY: number;
+  slideWidth: number;
+  slideHeight: number;
+};
 
 export const Slide = (props: SlideProps) => {
   const {
@@ -27,6 +44,8 @@ export const Slide = (props: SlideProps) => {
     setCurrElement,
     setXSize,
     setYSize,
+    setXPos, 
+    setYPos,
     setContent,
     setFontSize,
     setColor,
@@ -37,8 +56,114 @@ export const Slide = (props: SlideProps) => {
     setVideo,
     setCode,
     handleDeleteElement,
+    handleMoveElement,
+    handleMoveComplete,
   } = props;
 
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  const slideRef = useRef<HTMLDivElement | null>(null);
+  const dragRef = useRef<DragData | null>(null);
+  const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!dragRef.current) return;
+
+      const { 
+        index,
+        mouseX,
+        mouseY,
+        xPos,
+        yPos,
+        maxX,
+        maxY,
+        slideWidth,
+        slideHeight
+      } = dragRef.current;
+
+      if (slideWidth === 0 || slideHeight === 0) return;
+
+      const xPixelsChange = event.clientX - mouseX;
+      const yPixelsChange = event.clientY - mouseY;
+
+      const newXPos = clamp(xPos + xPixelsChange / slideWidth * 100, 0, maxX)
+      const newYPos = clamp(yPos + yPixelsChange / slideHeight * 100, 0, maxY)
+
+      handleMoveElement(index, newXPos.toFixed(2), newYPos.toFixed(2));
+    };
+
+    const handleMouseUp = () => {
+      if (dragRef.current) handleMoveComplete();
+      dragRef.current = null;
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    }
+
+  }, [handleMoveElement, handleMoveComplete])
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>, element: SlideElement, index: number) => {
+    // left click
+    if (e.button !== 0) return;
+
+    const rect = slideRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    dragRef.current = {
+      index,
+      mouseX: e.clientX,
+      mouseY: e.clientY,
+      xPos: Number(element.xPos),
+      yPos: Number(element.yPos),
+      maxX: Math.max(0, 100 - Number(element.xSize)),
+      maxY: Math.max(0, 100 - Number(element.ySize)),
+      slideWidth: rect.width,
+      slideHeight: rect.height
+    }
+
+    setSelectedIndex(index);
+    e.stopPropagation();
+  }
+
+  const handleDoubleClick = (e: React.MouseEvent<HTMLDivElement>, index: number) => {
+    e.preventDefault();
+    const el = slides[currentSlide].elements[index];
+
+    setCurrElement(index);
+    setXSize(el.xSize);
+    setYSize(el.ySize);
+    setXPos(el.xPos);
+    setYPos(el.yPos);
+    setContent(el.content);
+            
+    switch(el.type) {
+    case "text":
+      setFontSize(el.fontSize as string);
+      setColor(el.color as string);
+      setText(true);
+      break;
+    case "image":
+      setAlt(el.alt ?? "")
+      setImage(true)
+      break;
+    case "video":
+      setAutoplay(el.autoplay ?? false);
+      setVideo(true);
+      break;
+    case "code":
+      setFontSize(el.fontSize as string);
+      setCode(true);
+      break;
+    default:
+      break;
+    }
+  }
   const detectLanguage = (code: string) => {
     if (/#include|printf|scanf|int main|malloc/.test(code)) return "c";
     if (/def |import |print\(|elif |None|True|False/.test(code)) return "python";
@@ -47,51 +172,35 @@ export const Slide = (props: SlideProps) => {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center align-center bg-white">
+    <div className="flex-1 flex items-center justify-center align-center bg-white" onClick={() => setSelectedIndex(null)}>
       {slides.length === 0 ? (
         <p>No slides available</p>
       ) : (
-        <div key={slides[currentSlide].id} className="relative w-full max-w-5xl aspect-video bg-white flex border border-dotted border-gray-300 m-3">
+        <div ref={slideRef} key={slides[currentSlide].id} className="relative w-full max-w-5xl aspect-video bg-white flex border border-dotted border-gray-300 m-3">
           {/* 2.3 Adding elements to slides */}
           {slides[currentSlide].elements?.map((element: SlideElement, index) => (
             <div
               key={index}
-              className="element absolute border border-solid border-gray-100 break-words"
-              style={{width: element.xSize + "%", height: element.ySize + "%"}}
-              onDoubleClick={(e) => {
-                e.preventDefault();
-                const el = slides[currentSlide].elements[index];
-
-                setCurrElement(index);
-                setXSize(el.xSize);
-                setYSize(el.ySize);
-                setContent(el.content);
-                      
-                switch(el.type) {
-                case "text":
-                  setFontSize(el.fontSize as string);
-                  setColor(el.color as string);
-                  setText(true);
-                  break;
-                case "image":
-                  setAlt(el.alt ?? "")
-                  setImage(true)
-                  break;
-                case "video":
-                  setAutoplay(el.autoplay ?? false);
-                  setVideo(true);
-                  break;
-                case "code":
-                  setFontSize(el.fontSize as string);
-                  setCode(true);
-                  break;
-                default:
-                  break;
-                }
+              onMouseDown={(e) => handleMouseDown(e, element, index)}
+              onClick={(e) => {
+                setSelectedIndex(index); 
+                e.stopPropagation();
               }}
+              onDoubleClick={(e) => handleDoubleClick(e, index) }
               onContextMenu={(e) => {
                 e.preventDefault();
                 handleDeleteElement(index);
+              }}
+              className={`absolute
+                ${selectedIndex === index 
+              ? "outline outline-1 outline-[#226EDE] cursor-grab" 
+              : `hover:outline hover:outline-2 hover:outline-[#226EDE] ${element.type === "text" ? "outline outline-2 outline-gray-100" : ""}`
+            }`}
+              style={{
+                width: element.xSize + "%", 
+                height: element.ySize + "%", 
+                left: (element.xPos ?? "0") + "%", 
+                top: (element.yPos ?? "0") + "%"
               }}
             >
               {element.type === "text" ? (
@@ -132,6 +241,15 @@ export const Slide = (props: SlideProps) => {
                   </SyntaxHighlighter>
                 </div>
               ) : null}
+
+              {selectedIndex === index && (
+                <>
+                  <span className="absolute -top-[3px] -left-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10" />
+                  <span className="absolute -top-[3px] -right-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10" />
+                  <span className="absolute -bottom-[3px] -left-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10" />
+                  <span className="absolute -bottom-[3px] -right-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10" />
+                </>
+              )}
             </div>
           ))}
           <p className="absolute bottom-2 left-2 text-sm text-gray-500">
