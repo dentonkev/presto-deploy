@@ -1,4 +1,5 @@
 import { MdOutlineTextFields, MdImage, MdVideocam, MdCode } from "react-icons/md";
+import { IoIosColorPalette } from "react-icons/io";
 
 export interface ToolBarProps {
   setCurrElement: (_index: number | null) => void;
@@ -84,6 +85,14 @@ export const ToolBar = (props: ToolBarProps) => {
       >
         <MdCode size={20} className="text-white"/>
           Code
+      </button>
+      <button className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md"
+        onClick={(e) => {
+          e.currentTarget.blur();
+        }}
+      >
+        <IoIosColorPalette size={20} className="text-white"/>
+          Theme
       </button>
     </div>
   )
