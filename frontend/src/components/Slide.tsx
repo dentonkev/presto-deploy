@@ -265,7 +265,7 @@ export const Slide = (props: SlideProps) => {
                 e.preventDefault();
                 handleDeleteElement(index);
               }}
-              className={`absolute
+              className={`absolute z-0
                 ${selectedIndex === index 
               ? "outline outline-1 outline-[#226EDE] cursor-grab" 
               : `hover:outline hover:outline-2 hover:outline-[#226EDE] ${element.type === "text" ? "outline outline-2 outline-gray-100" : ""}`
