@@ -1,4 +1,5 @@
 import { MdOutlineTextFields, MdImage, MdVideocam, MdCode } from "react-icons/md";
+import { IoIosColorPalette } from "react-icons/io";
 
 export interface ToolBarProps {
   setCurrElement: (_index: number | null) => void;
@@ -16,10 +17,11 @@ export interface ToolBarProps {
   setAutoplay: (_value: boolean) => void;
   setVideo: (_value: boolean) => void;
   setCode: (_value: boolean) => void;
+  setTheme: (_value: boolean) => void;
 }
 
 export const ToolBar = (props: ToolBarProps) => {
-  const { setCurrElement, setXSize, setYSize, setXPos, setYPos, setContent, setFontSize, setFontFamily, setColor, setText, setAlt, setImage, setAutoplay, setVideo, setCode } = props;
+  const { setCurrElement, setXSize, setYSize, setXPos, setYPos, setContent, setFontSize, setFontFamily, setColor, setText, setAlt, setImage, setAutoplay, setVideo, setCode, setTheme } = props;
 
   return (
     <div className="absolute left-11 top-0 flex flex-col h-full w-fit bg-[#1a1a1c] shadow-xl overflow-hidden p-2.5 gap-3 border-l border-solid border-[#323232]">
@@ -86,6 +88,15 @@ export const ToolBar = (props: ToolBarProps) => {
       >
         <MdCode size={20} className="text-white"/>
           Code
+      </button>
+      <button className="flex flex-col cursor-pointer items-center text-xs text-gray-200 aspect-square p-2.5 hover:bg-[#313133] hover:rounded-md"
+        onClick={(e) => {
+          e.currentTarget.blur();
+          setTheme(true);
+        }}
+      >
+        <IoIosColorPalette size={20} className="text-white"/>
+          Theme
       </button>
     </div>
   )

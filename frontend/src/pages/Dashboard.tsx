@@ -12,6 +12,14 @@ export type Presentation = {
   name: string;
   description: string;
   thumbnail: string | ArrayBuffer | null;
+  defaultBackground?: {
+    style: "solid" | "gradient" | "image";
+    solidColor: string;
+    gradientFrom: string;
+    gradientTo: string;
+    gradientDirection: "to bottom" | "to right" | "to bottom right";
+    imageUrl: string;
+  };
   slides: { id: string }[];
 };
 
@@ -48,10 +56,19 @@ const Dashboard = () => {
         name,
         description,
         thumbnail,
+        defaultBackground: {
+          style: "solid",
+          solidColor: "#ffffff",
+          gradientFrom: "#34d399",
+          gradientTo: "#3b82f6",
+          gradientDirection: "to right",
+          imageUrl: "",
+        },
         slides: [
           {
             id: uuidv4(),
             elements: [],
+            useDefaultBackground: true,
           },
         ],
       };
