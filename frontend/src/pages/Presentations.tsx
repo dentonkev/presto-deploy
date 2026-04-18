@@ -423,6 +423,7 @@ const Presentations = () => {
           />
           {openSlideDeck && (
             <SlideDeck
+              pid={id as string}
               slides={slides}
               setSlides={setSlides}
               setCurrentSlide={setCurrentSlide}
