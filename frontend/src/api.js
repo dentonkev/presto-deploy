@@ -307,3 +307,35 @@ export const apiDeleteElement = async (pid, currSlide, currElement) => {
 
   return presentations;
 }
+
+export const apiReorderSlides = async (pid, slides) => {
+  const token = localStorage.getItem("token");
+
+  const dataStore = await apiFetchStore();
+  const store = dataStore.store || {};
+  const presentations = store.presentations || [];
+
+  const presentation = presentations.find((p) => p.id === pid);
+  presentation.slides = slides;
+
+  const res = await fetch(`${URL}/store`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      store: {
+        ...store,
+        presentations,
+      },
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error);
+  }
+
+  return presentations;
+}
