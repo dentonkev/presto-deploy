@@ -13,6 +13,7 @@ export interface SlideProps {
   setYPos: (_value: string) => void;
   setContent: (_value: string) => void;
   setFontSize: (_value: string) => void;
+  setFontFamily: (_value: string) => void;
   setColor: (_value: string) => void;
   setText: (_value: boolean) => void;
   setAlt: (_value: string) => void;
@@ -51,6 +52,7 @@ export const Slide = (props: SlideProps) => {
     setYPos,
     setContent,
     setFontSize,
+    setFontFamily,
     setColor,
     setText,
     setAlt,
@@ -215,6 +217,7 @@ export const Slide = (props: SlideProps) => {
     switch(el.type) {
     case "text":
       setFontSize(el.fontSize as string);
+      setFontFamily(el.fontFamily as string);
       setColor(el.color as string);
       setText(true);
       break;
@@ -234,6 +237,7 @@ export const Slide = (props: SlideProps) => {
       break;
     }
   }
+
   const detectLanguage = (code: string) => {
     if (/#include|printf|scanf|int main|malloc/.test(code)) return "c";
     if (/def |import |print\(|elif |None|True|False/.test(code)) return "python";
@@ -275,7 +279,7 @@ export const Slide = (props: SlideProps) => {
             >
               {element.type === "text" ? (
                 <div className="overflow-scroll [scrollbar-width:none] [-ms-overflow-style:none] hover:[scrollbar-width:thin] hover:[-ms-overflow-style:thin] w-full h-full">
-                  <p style={{ color: element.color, fontSize: `${element.fontSize}em` }}>
+                  <p style={{ color: element.color, fontSize: `${element.fontSize}em`, fontFamily: `${element.fontFamily}` }}>
                     {element.content}
                   </p>
                 </div>

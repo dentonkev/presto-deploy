@@ -25,6 +25,7 @@ export type SlideElement = {
   content: string;
   type: string;
   fontSize?: string;
+  fontFamily?: string;
   color?: string;
   alt?: string;
   autoplay?: boolean;
@@ -75,6 +76,7 @@ const Presentations = () => {
   // Text elements
   const [text, setText] = useState(false);
   const [fontSize, setFontSize] = useState<string>("1"); // in em
+  const [fontFamily, setFontFamily] = useState("Arial");
   const [color, setColor] = useState<string>("#000000");
 
   // Image elements
@@ -390,6 +392,7 @@ const Presentations = () => {
             setYPos={setYPos}
             setContent={setContent}
             setFontSize={setFontSize}
+            setFontFamily={setFontFamily}
             setColor={setColor}
             setText={setText}
             setAlt={setAlt}
@@ -411,6 +414,7 @@ const Presentations = () => {
               setYPos={setYPos}
               setContent={setContent}
               setFontSize={setFontSize}
+              setFontFamily={setFontFamily}
               setColor={setColor}
               setText={setText}
               setAlt={setAlt}
@@ -497,6 +501,8 @@ const Presentations = () => {
         setContent={setContent}
         fontSize={fontSize}
         setFontSize={setFontSize}
+        fontFamily={fontFamily}
+        setFontFamily={setFontFamily}
         color={color}
         setColor={setColor}
         handleCreateElement={handleCreateElement}
