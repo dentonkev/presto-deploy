@@ -22,17 +22,20 @@ export interface SlideProps {
   setCode: (_value: boolean) => void;
   handleDeleteElement: (_index: number) => void;
   handleMoveElement: (_index: number, _xPos: string, _yPos: string) => void;
-  handleMoveComplete: () => void;
+  handleResizeElement: (_index: number, _XPos: string, _YPos: string, _XSize: string, _YSize: string) => void;
+  handleInteractionComplete: () => void;
 }
 
-type DragData = {
+type interactionData = {
   index: number;
+  mode: "move" | "resize";
+  corner: "tl" | "tr" | "bl" | "br" | null;
   mouseX: number;
   mouseY: number;
   xPos: number;
   yPos: number;
-  maxX: number;
-  maxY: number;
+  xSize: number;
+  ySize: number;
   slideWidth: number;
   slideHeight: number;
 };
@@ -57,45 +60,85 @@ export const Slide = (props: SlideProps) => {
     setCode,
     handleDeleteElement,
     handleMoveElement,
-    handleMoveComplete,
+    handleResizeElement,
+    handleInteractionComplete,
   } = props;
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   const slideRef = useRef<HTMLDivElement | null>(null);
-  const dragRef = useRef<DragData | null>(null);
+  const interactionRef = useRef<interactionData | null>(null);
   const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
-      if (!dragRef.current) return;
+      if (!interactionRef.current) return;
 
       const { 
         index,
+        mode,
+        corner,
         mouseX,
         mouseY,
         xPos,
         yPos,
-        maxX,
-        maxY,
+        xSize,
+        ySize,
         slideWidth,
         slideHeight
-      } = dragRef.current;
+      } = interactionRef.current;
 
       if (slideWidth === 0 || slideHeight === 0) return;
 
       const xPixelsChange = event.clientX - mouseX;
       const yPixelsChange = event.clientY - mouseY;
 
-      const newXPos = clamp(xPos + xPixelsChange / slideWidth * 100, 0, maxX)
-      const newYPos = clamp(yPos + yPixelsChange / slideHeight * 100, 0, maxY)
+      if (mode === "move") {
+        const maxX = Math.max(0, 100 - xSize);
+        const maxY = Math.max(0, 100 - ySize);
 
-      handleMoveElement(index, newXPos.toFixed(2), newYPos.toFixed(2));
+        const newXPos = clamp(xPos + xPixelsChange / slideWidth * 100, 0, maxX)
+        const newYPos = clamp(yPos + yPixelsChange / slideHeight * 100, 0, maxY)
+
+        handleMoveElement(index, newXPos.toFixed(2), newYPos.toFixed(2));
+      } else if (mode === "resize") {
+        if (!corner) return;
+
+        const minSize = 1;
+        const right = xPos + xSize;
+        const bottom = yPos + ySize;
+        const xPercentageChange = xPixelsChange / slideWidth * 100
+        const yPercentageChange = yPixelsChange / slideHeight * 100
+        let newXPos = xPos;
+        let newYPos = yPos;
+        let newXSize = xSize;
+        let newYSize = ySize;
+
+        if (corner === "tl") {
+          newXPos = clamp(xPos + xPercentageChange, 0, right - minSize);
+          newYPos = clamp(yPos + yPercentageChange, 0, bottom - minSize);
+          newXSize = right - newXPos;
+          newYSize = bottom - newYPos;
+        } else if (corner === "tr") {
+          newYPos = clamp(yPos + yPercentageChange, 0, bottom - minSize);
+          newXSize = clamp(right + xPercentageChange, xPos + minSize, 100) - newXPos;
+          newYSize = bottom - newYPos;
+        } else if (corner === "bl") {
+          newXPos = clamp(xPos + xPercentageChange, 0, right - minSize);
+          newXSize = right - newXPos;
+          newYSize = clamp(bottom + yPercentageChange, yPos + minSize, 100) - newYPos;
+        } else if (corner === "br") {
+          newXSize = clamp(xSize + xPercentageChange, minSize, 100 - xPos);
+          newYSize = clamp(ySize + yPercentageChange, minSize, 100 - yPos);
+        }
+
+        handleResizeElement(index, newXPos.toFixed(2), newYPos.toFixed(2), newXSize.toFixed(2), newYSize.toFixed(2));
+      }
     };
 
     const handleMouseUp = () => {
-      if (dragRef.current) handleMoveComplete();
-      dragRef.current = null;
+      if (interactionRef.current) handleInteractionComplete();
+      interactionRef.current = null;
     };
 
     window.addEventListener("mousemove", handleMouseMove);
@@ -106,7 +149,7 @@ export const Slide = (props: SlideProps) => {
       window.removeEventListener("mouseup", handleMouseUp);
     }
 
-  }, [handleMoveElement, handleMoveComplete])
+  }, [handleMoveElement, handleResizeElement, handleInteractionComplete])
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>, element: SlideElement, index: number) => {
     // left click
@@ -115,14 +158,41 @@ export const Slide = (props: SlideProps) => {
     const rect = slideRef.current?.getBoundingClientRect();
     if (!rect) return;
 
-    dragRef.current = {
+    interactionRef.current = {
       index,
+      mode: "move",
+      corner: null,
       mouseX: e.clientX,
       mouseY: e.clientY,
       xPos: Number(element.xPos),
       yPos: Number(element.yPos),
-      maxX: Math.max(0, 100 - Number(element.xSize)),
-      maxY: Math.max(0, 100 - Number(element.ySize)),
+      xSize: Number(element.xSize),
+      ySize: Number(element.ySize),
+      slideWidth: rect.width,
+      slideHeight: rect.height
+    }
+
+    setSelectedIndex(index);
+    e.stopPropagation();
+  }
+
+  const handleCornerDown = (e: React.MouseEvent<HTMLSpanElement>, element: SlideElement, index: number, corner: "tl" | "tr" | "bl" | "br") => {
+    // left click
+    if (e.button !== 0) return;
+
+    const rect = slideRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    interactionRef.current = {
+      index,
+      mode: "resize",
+      corner,
+      mouseX: e.clientX,
+      mouseY: e.clientY,
+      xPos: Number(element.xPos),
+      yPos: Number(element.yPos),
+      xSize: Number(element.xSize),
+      ySize: Number(element.ySize),
       slideWidth: rect.width,
       slideHeight: rect.height
     }
@@ -244,10 +314,10 @@ export const Slide = (props: SlideProps) => {
 
               {selectedIndex === index && (
                 <>
-                  <span className="absolute -top-[3px] -left-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10" />
-                  <span className="absolute -top-[3px] -right-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10" />
-                  <span className="absolute -bottom-[3px] -left-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10" />
-                  <span className="absolute -bottom-[3px] -right-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10" />
+                  <span onMouseDown={(e) => handleCornerDown(e, element, index, "tl")} className="absolute -top-[3px] -left-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10 cursor-nw-resize" />
+                  <span onMouseDown={(e) => handleCornerDown(e, element, index, "tr")} className="absolute -top-[3px] -right-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10 cursor-ne-resize" />
+                  <span onMouseDown={(e) => handleCornerDown(e, element, index, "bl")} className="absolute -bottom-[3px] -left-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10 cursor-sw-resize" />
+                  <span onMouseDown={(e) => handleCornerDown(e, element, index, "br")} className="absolute -bottom-[3px] -right-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10 cursor-se-resize" />
                 </>
               )}
             </div>
