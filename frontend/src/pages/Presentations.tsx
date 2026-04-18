@@ -17,6 +17,7 @@ import { Settings } from "../components/Settings";
 import { RightSideBar } from "../components/RightSideBar";
 import { CodeModal } from "../components/CodeModal";
 import { ThemeModal } from "../components/ThemeModal";
+import { SlideDeck } from "../components/SlideDeck";
 
 export type SlideElement = {
   xSize: string;
@@ -82,6 +83,7 @@ const Presentations = () => {
   const [name, setName] = useState("");
   const [openSettings, setOpenSettings] = useState(false);
   const [openTools, setOpenTools] = useState(true);
+  const [openSlideDeck, setOpenSlideDeck] = useState(false);
   const [description, setDescription] = useState("");
   const [thumbnail, setThumbnail] = useState<string | ArrayBuffer | null>(null);
   const [deleteMode, setDeleteMode] = useState<'presentation' | 'slide' | null>(null);
@@ -257,6 +259,18 @@ const Presentations = () => {
       const next = !openTools;
       if (next) {
         setOpenSettings(false);
+        setOpenSlideDeck(false);
+      }
+      return next;
+    });
+  };
+
+  const handleSlideDeck = () => {
+    setOpenSlideDeck((openSlideDeck) => {
+      const next = !openSlideDeck;
+      if (next) {
+        setOpenSettings(false);
+        setOpenTools(false);
       }
       return next;
     });
@@ -267,6 +281,7 @@ const Presentations = () => {
       const next = !openSettings;
       if (next) {
         setOpenTools(false);
+        setOpenSlideDeck(false);
       }
       return next;
     });
@@ -455,6 +470,7 @@ const Presentations = () => {
           <SideBar
             openDashboard={() => navigate("/dashboard")}
             toggleTools={handleToolsToggle}
+            toggleSlideDeck={handleSlideDeck}
             toggleSettings={handleSettingsToggle}
             deletePresentation={handleOpenDeletePresentation}
           />
@@ -482,6 +498,15 @@ const Presentations = () => {
             handleResizeElement={handleResizeElement}
             handleInteractionComplete={handleInteractionComplete}
           />
+          {openSlideDeck && (
+            <SlideDeck
+              pid={id as string}
+              slides={slides}
+              setSlides={setSlides}
+              setCurrentSlide={setCurrentSlide}
+              setSlideDeck={setOpenSlideDeck}
+            />
+          )}
           {openTools && (
             <ToolBar 
               setCurrElement={setCurrElement}
@@ -518,7 +543,7 @@ const Presentations = () => {
             slides={slides}
           />
         </div>
-        {slides.length > 1 ? (
+        {slides.length > 1 && !openSlideDeck ? (
           <div className="z-50 fixed bottom-2 right-13">
             <button
               onClick={() => setCurrentSlide(currentSlide - 1)}
@@ -543,18 +568,20 @@ const Presentations = () => {
           </div>
         ) : null}
       </section>
-      <Button
-        variant="contained"
-        onClick={handleCreateSlide}
-        sx = {{
-          position: "fixed",
-          bottom: "2%",
-          left: "50%",
-          transform: "translateX(-50%)"
-        }}
-      >
+      {!openSlideDeck && (
+        <Button
+          variant="contained"
+          onClick={handleCreateSlide}
+          sx = {{
+            position: "fixed",
+            bottom: "2%",
+            left: "50%",
+            transform: "translateX(-50%)"
+          }}
+        >
           New Slide
-      </Button>
+        </Button>
+      )}
       <DeleteDialog open={openDelete} selectedValue="" onClose={() => {
         setOpenDelete(false);
       }} title={deleteDialogTitle}
