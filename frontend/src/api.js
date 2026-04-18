@@ -206,8 +206,7 @@ export const apiEditPresentation = async (pid, newInfo) => {
   const presentations = store.presentations || [];
 
   const presentation = presentations.find((p) => p.id === pid);
-  presentation.description = newInfo.description;
-  presentation.thumbnail = newInfo.thumbnail;
+  Object.assign(presentation, newInfo);
 
   const res = await fetch(`${URL}/store`, {
     method: "PUT",
