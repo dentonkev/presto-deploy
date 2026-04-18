@@ -16,6 +16,7 @@ import { ToolBar } from "../components/ToolBar";
 import { Settings } from "../components/Settings";
 import { RightSideBar } from "../components/RightSideBar";
 import { CodeModal } from "../components/CodeModal";
+import { ThemeModal } from "../components/ThemeModal";
 
 export type SlideElement = {
   xSize: string;
@@ -32,10 +33,30 @@ export type SlideElement = {
   language?: "c" | "python" | "javascript";
 }
 
+export type SlideBackground = {
+  style: "solid" | "gradient" | "image";
+  solidColor: string;
+  gradientFrom: string;
+  gradientTo: string;
+  gradientDirection: "to bottom" | "to right" | "to bottom right";
+  imageUrl: string;
+}
+
 export type SlideData = {
   id: string;
   elements: SlideElement[];
+  useDefaultBackground?: boolean;
+  background?: SlideBackground;
 };
+
+const DEFAULT_BACKGROUND: SlideBackground = {
+  style: "solid",
+  solidColor: "#ffffff",
+  gradientFrom: "#34d399",
+  gradientTo: "#3b82f6",
+  gradientDirection: "to right",
+  imageUrl: "",
+}
 
 const Presentations = () => {
   const { id, num } = useParams();
@@ -64,6 +85,7 @@ const Presentations = () => {
   const [description, setDescription] = useState("");
   const [thumbnail, setThumbnail] = useState<string | ArrayBuffer | null>(null);
   const [deleteMode, setDeleteMode] = useState<'presentation' | 'slide' | null>(null);
+  const [defaultBackground, setDefaultBackground] = useState<SlideBackground>(DEFAULT_BACKGROUND);
 
   // Generic element properties
   const [currElement, setCurrElement] = useState<number | null>(null);
@@ -89,6 +111,9 @@ const Presentations = () => {
 
   // Code elements
   const [code, setCode] = useState(false);
+
+  // Theme modal
+  const [theme, setTheme] = useState(false);
 
   // Delete Dialog config
   const deleteDialogTitle = deleteMode === "presentation" ? "You are deleting the full presentation." : "This slide will be permanently removed.";
@@ -134,7 +159,7 @@ const Presentations = () => {
 
   const handleCreateSlide = async () => {
     const newSlide = uuidv4();
-    const newSlides = [...slides, { id: newSlide, elements: [] }];
+    const newSlides = [...slides, { id: newSlide, elements: [], useDefaultBackground: true}];
     try {
       await apiUpdatePresentation(id, newSlides);
       setSlides(newSlides);
@@ -316,6 +341,52 @@ const Presentations = () => {
     }
   };
 
+  const handleSaveCurrentBackground = async (background: SlideBackground) => {
+    try {
+      const updatedSlides = slides.map((slide, index) => {
+        if (index === currentSlide) {
+          return { ...slide, useDefaultBackground: false, background };
+        } 
+        return slide;
+      })
+      setSlides(updatedSlides);
+      await apiUpdatePresentation(id, updatedSlides);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        showError(err.message);
+      }
+    }
+  }
+
+  const handleUseDefaultBackground = async () => {
+    try {
+      const updatedSlides = slides.map((slide, index) => {
+        if (index === currentSlide) {
+          return { ...slide, useDefaultBackground: true, background: undefined };
+        }
+        return slide;
+      });
+
+      setSlides(updatedSlides);
+      await apiUpdatePresentation(id, updatedSlides);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        showError(err.message);
+      }
+    }
+  };
+
+  const handleSaveDefaultBackground = async (background: SlideBackground) => {
+    try {
+      setDefaultBackground(background);
+      await apiEditPresentation(id, { defaultBackground: background });
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        showError(err.message);
+      }
+    }
+  };
+
   useEffect(() => {
     slidesRef.current = slides;
   }, [slides]);
@@ -326,7 +397,12 @@ const Presentations = () => {
       const presentation = data.store.presentations.find(
         (p: Presentation) => p.id === id
       );
-      setSlides(presentation?.slides || []);
+
+      const loadedDefaultBackground = presentation?.defaultBackground || DEFAULT_BACKGROUND;
+      const loadedSlides = (presentation?.slides || []);
+
+      setDefaultBackground(loadedDefaultBackground);
+      setSlides(loadedSlides);
       setName(presentation?.name || ""); 
       setNewName(presentation?.name || ""); 
       setDescription(presentation?.description || "");
@@ -385,6 +461,7 @@ const Presentations = () => {
           <Slide
             slides={slides}
             currentSlide={currentSlide}
+            defaultBackground={defaultBackground}
             setCurrElement={setCurrElement}
             setXSize={setXSize}
             setYSize={setYSize}
@@ -422,6 +499,7 @@ const Presentations = () => {
               setAutoplay={setAutoplay}
               setVideo={setVideo}
               setCode={setCode}
+              setTheme={setTheme}
             />
           )}
           {openSettings && (
@@ -547,6 +625,18 @@ const Presentations = () => {
         setFontSize={setFontSize}
         handleCreateElement={handleCreateElement}
       />
+      {theme && (
+        <ThemeModal
+          theme={theme}
+          setTheme={setTheme}
+          currentSlideBackground={slides[currentSlide]?.background || defaultBackground}
+          isUsingDefaultBackground={slides[currentSlide]?.useDefaultBackground ?? true}
+          defaultBackground={defaultBackground}
+          handleSaveCurrentBackground={handleSaveCurrentBackground}
+          handleUseDefaultBackground={handleUseDefaultBackground}
+          handleSaveDefaultBackground={handleSaveDefaultBackground}
+        />
+      )}
     </>
   );
 }
