@@ -15,7 +15,7 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/presentation/:id" element={<Presentations />} />
+          <Route path="/presentation/:id/:num" element={<Presentations />} />
         </Routes>
       </ErrorProvider>
     </BrowserRouter>
