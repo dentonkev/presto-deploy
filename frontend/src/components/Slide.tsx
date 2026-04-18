@@ -1,4 +1,4 @@
-import type { SlideData, SlideElement } from "../pages/Presentations";
+import type { SlideData, SlideElement, SlideBackground } from "../pages/Presentations";
 import React, { useEffect, useRef, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
@@ -6,6 +6,7 @@ import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 export interface SlideProps {
   slides: SlideData[];
   currentSlide: number;
+  defaultBackground: SlideBackground;
   setCurrElement: (_value: number | null) => void;
   setXSize: (_value: string) => void;
   setYSize: (_value: string) => void;
@@ -45,6 +46,7 @@ export const Slide = (props: SlideProps) => {
   const {
     slides,
     currentSlide,
+    defaultBackground,
     setCurrElement,
     setXSize,
     setYSize,
@@ -245,12 +247,40 @@ export const Slide = (props: SlideProps) => {
     return "javascript";
   };
 
+  const getSlideBackgroundStyle = (slide: SlideData): React.CSSProperties => {
+    const bg = slide.useDefaultBackground === false && slide.background
+      ? slide.background
+      : defaultBackground;
+
+    if (bg.style === "solid") {
+      return { backgroundColor: bg.solidColor };
+    }
+
+    if (bg.style === "gradient") {
+      return {
+        backgroundImage: `linear-gradient(${bg.gradientDirection}, ${bg.gradientFrom}, ${bg.gradientTo})`,
+      };
+    }
+
+    return {
+      backgroundImage: `url(${bg.imageUrl})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
+    };
+  };
+
   return (
     <div className="flex-1 flex items-center justify-center align-center bg-white" onClick={() => setSelectedIndex(null)}>
       {slides.length === 0 ? (
         <p>No slides available</p>
       ) : (
-        <div ref={slideRef} key={slides[currentSlide].id} className="relative w-full max-w-5xl aspect-video bg-white flex border border-dotted border-gray-300 m-3">
+        <div
+          ref={slideRef}
+          key={slides[currentSlide].id}
+          className="relative w-full max-w-5xl aspect-video flex border border-dotted border-gray-300 m-3"
+          style={getSlideBackgroundStyle(slides[currentSlide])}
+        >
           {/* 2.3 Adding elements to slides */}
           {slides[currentSlide].elements?.map((element: SlideElement, index) => (
             <div
