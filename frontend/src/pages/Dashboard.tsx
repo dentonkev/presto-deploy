@@ -145,7 +145,7 @@ const Dashboard = () => {
               <Card
                 key={p.id}
                 className="aspect-[2/1] min-w-[100px] flex overflow-hidden cursor-pointer"
-                onClick={() => navigate(`/presentation/${p.id}`)}
+                onClick={() => navigate(`/presentation/${p.id}/1`)}
               >
                 {/* Thumbail */}
                 <div className="w-1/3 h-full bg-gray-300 flex-shrink-0">
