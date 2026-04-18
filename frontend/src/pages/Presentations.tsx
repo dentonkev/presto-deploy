@@ -37,11 +37,25 @@ export type SlideData = {
 };
 
 const Presentations = () => {
+  const { id, num } = useParams();
+  const navigate = useNavigate();
+  const showError = useContext(ErrorContext);
+
+  const parseNum = () => {
+    if (num !== undefined) {
+      const parsed = parseInt(num, 10);
+      if (parsed && parsed >= 1) {
+        return parsed - 1;
+      }
+    }
+    return 0;
+  }
+
   const [openDelete, setOpenDelete] = useState(false);
   const [openTitle, setOpenTitle] = useState(false);
   const [slides, setSlides] = useState<SlideData[]>([]);
   const slidesRef = useRef<SlideData[]>([]);
-  const [currentSlide, setCurrentSlide] = useState(0)
+  const [currentSlide, setCurrentSlide] = useState(parseNum)
   const [newName, setNewName] = useState("");
   const [name, setName] = useState("");
   const [openSettings, setOpenSettings] = useState(false);
@@ -77,10 +91,6 @@ const Presentations = () => {
   // Delete Dialog config
   const deleteDialogTitle = deleteMode === "presentation" ? "You are deleting the full presentation." : "This slide will be permanently removed.";
   const deleteDialogContent = deleteMode === "presentation" ? "Are you sure?" : "Delete this Slide?";
-
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const showError = useContext(ErrorContext);
 
   const handleTitle = async () => {
     await apiEditTitle(id, newName);
@@ -338,6 +348,10 @@ const Presentations = () => {
       window.removeEventListener("keydown", handleArrowKeyDown);
     };
   }, [currentSlide, slides.length, text, video, image, code]);
+
+  useEffect(() => {
+    navigate(`/presentation/${id}/${currentSlide + 1}`, {replace: true})
+  }, [currentSlide, id, navigate])
 
   return (
     <>
