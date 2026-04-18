@@ -1,15 +1,16 @@
 import { FaArrowLeft, FaBars, FaTrashAlt } from "react-icons/fa";
-import { MdSettings } from "react-icons/md";
+import { MdSettings, MdGridView } from "react-icons/md";
 
 export interface SideBarProps {
   openDashboard: () => void;
   toggleTools: () => void;
+  toggleSlideDeck: () => void;
   toggleSettings: () => void;
   deletePresentation: () => void;
 }
 
 export const SideBar = (props: SideBarProps) => {
-  const { openDashboard, toggleTools, toggleSettings, deletePresentation } = props;
+  const { openDashboard, toggleTools, toggleSlideDeck, toggleSettings, deletePresentation } = props;
 
   return (
     <div className="flex flex-col justify-between p-3.5 bg-black h-full">
@@ -22,6 +23,7 @@ export const SideBar = (props: SideBarProps) => {
           <FaArrowLeft className="text-gray-400 hover:text-red-500"/>
         </button>
         <button
+          title="Tools"
           aria-label="Tools"
           className="cursor-pointer"
           onClick={(e) => {
@@ -31,9 +33,21 @@ export const SideBar = (props: SideBarProps) => {
         >
           <FaBars className="text-gray-400 hover:text-red-500"/>
         </button>
+        <button
+          title="Arrange Slide"
+          aria-label="Slide Deck"
+          className="cursor-pointer"
+          onClick={(e) => {
+            e.currentTarget.blur();
+            toggleSlideDeck();
+          }}
+        >
+          <MdGridView className="text-gray-400 hover:text-red-500"/>
+        </button>
       </div>
       <div className="flex flex-col gap-5">
         <button 
+          title="Presentation Settings"
           aria-label="Settings"
           className="cursor-pointer"
           onClick={(e) => {
