@@ -65,12 +65,6 @@ export const RevisionHistory = (props: RevisionProps) => {
                 >
                   <MdReplay/>
                 </button>
-                <button
-                  title="Preview"
-                  className="flex justify-center items-center w-[32px] h-[32px] bg-[#f6f7f9] cursor-pointer"
-                >
-                  <FaEye/>
-                </button>
               </div>
             </li>
           ))}
