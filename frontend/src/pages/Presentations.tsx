@@ -505,6 +505,7 @@ const Presentations = () => {
             <SlideDeck
               pid={id as string}
               slides={slides}
+              defaultBackground={defaultBackground}
               setSlides={setSlides}
               setCurrentSlide={setCurrentSlide}
               setSlideDeck={setOpenSlideDeck}

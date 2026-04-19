@@ -1,16 +1,19 @@
-import type { SlideData, SlideElement } from "../pages/Presentations";
+import type React from "react";
+import type { SlideBackground, SlideData, SlideElement } from "../pages/Presentations";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 export interface SlideProps {
   slides: SlideData[];
   currentSlide: number;
+  defaultBackground: SlideBackground;
 }
 
 export const SlidePreview = (props: SlideProps) => {
   const {
     slides,
-    currentSlide
+    currentSlide,
+    defaultBackground
   } = props;
 
   const detectLanguage = (code: string) => {
@@ -20,8 +23,34 @@ export const SlidePreview = (props: SlideProps) => {
     return "javascript";
   };
 
+  const getSlideBackgroundStyle = (slide: SlideData): React.CSSProperties => {
+    const bg = slide.useDefaultBackground === false && slide.background
+      ? slide.background
+      : defaultBackground;
+  
+    if (bg.style === "solid") {
+      return { backgroundColor: bg.solidColor };
+    }
+  
+    if (bg.style === "gradient") {
+      return {
+        backgroundImage: `linear-gradient(${bg.gradientDirection}, ${bg.gradientFrom}, ${bg.gradientTo})`,
+      };
+    }
+  
+    return {
+      backgroundImage: `url(${bg.imageUrl})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
+    };
+  };
+
   return (
-    <div className="relative w-[1280px] h-[720px] bg-white overflow-hidden">
+    <div 
+      className="relative w-[1290px] h-[720px] overflow-hidden"
+      style={getSlideBackgroundStyle(slides[currentSlide])}
+    >
       {slides[currentSlide].elements?.map((element: SlideElement, index) => (
         <div
           key={index}

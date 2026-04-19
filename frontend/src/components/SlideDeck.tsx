@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { SlideData } from "../pages/Presentations";
+import type { SlideBackground, SlideData } from "../pages/Presentations";
 import { SlidePreview } from "./SlidePreview";
 import { apiReorderSlides } from "../api";
 import { Button } from "@mui/material";
@@ -7,13 +7,14 @@ import { Button } from "@mui/material";
 export interface SlideDeckProps {
   pid: string;
   slides: SlideData[];
+  defaultBackground: SlideBackground;
   setSlides: (_value: SlideData[]) => void;
   setCurrentSlide: (_value: number) => void;
   setSlideDeck: (_value: boolean) => void;
 }
 
 export const SlideDeck = (props: SlideDeckProps) => {
-  const { pid, slides, setSlides, setCurrentSlide, setSlideDeck } = props;
+  const { pid, slides, defaultBackground, setSlides, setCurrentSlide, setSlideDeck } = props;
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);
 
@@ -34,8 +35,8 @@ export const SlideDeck = (props: SlideDeckProps) => {
   }, []);
 
   return (
-    <div className="flex flex-col justify-center absolute left-11 h-full w-full bg-white p-2.5 overflow-x-scroll [scrollbar-width:none] [-ms-overflow-style:none]">
-      <div className="text-white fixed top-10 left-1/2 -translate-x-1/2 mt-10 fixed w-[98%] max-w-[600px] h-[49px] bg-[#1a1a1c] flex items-center p-3 rounded-sm justify-between shadow-md">
+    <div className="flex flex-col justify-center absolute left-11 right-0 h-full bg-white p-2.5">
+      <div className="text-white sticky mx-auto w-[80%] max-w-[600px] h-[49px] bg-[#1a1a1c] flex items-center p-3 rounded-sm justify-between shadow-md">
         <p>Drag slides to arrange. Click to navigate to a particular slide.</p>
         <Button 
           variant="contained"
@@ -52,7 +53,7 @@ export const SlideDeck = (props: SlideDeckProps) => {
       {slides.length === 0 ? (
         <p>No slides available</p>
       ) : (
-        <div className="flex gap-3 h-full items-center">
+        <div className="flex gap-3 h-full items-center overflow-x-scroll [scrollbar-width:none] [-ms-overflow-style:none]">
           {slides?.map((_, index) => (
             <div 
               key={index} 
@@ -73,6 +74,7 @@ export const SlideDeck = (props: SlideDeckProps) => {
                 <SlidePreview
                   slides={slides}
                   currentSlide={index}
+                  defaultBackground={defaultBackground}
                 />
               </div>
             </div>
