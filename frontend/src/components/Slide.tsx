@@ -2,6 +2,7 @@ import type { SlideData, SlideElement, SlideBackground } from "../pages/Presenta
 import React, { useEffect, useRef, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { Fade } from "@mui/material";
 
 export interface SlideProps {
   slides: SlideData[];
@@ -275,91 +276,93 @@ export const Slide = (props: SlideProps) => {
       {slides.length === 0 ? (
         <p>No slides available</p>
       ) : (
-        <div
-          ref={slideRef}
-          key={slides[currentSlide].id}
-          className="relative w-full max-w-5xl aspect-video flex border border-dotted border-gray-300 m-3"
-          style={getSlideBackgroundStyle(slides[currentSlide])}
-        >
-          {/* 2.3 Adding elements to slides */}
-          {slides[currentSlide].elements?.map((element: SlideElement, index) => (
-            <div
-              key={index}
-              onMouseDown={(e) => handleMouseDown(e, element, index)}
-              onClick={(e) => {
-                setSelectedIndex(index); 
-                e.stopPropagation();
-              }}
-              onDoubleClick={(e) => handleDoubleClick(e, index) }
-              onContextMenu={(e) => {
-                e.preventDefault();
-                handleDeleteElement(index);
-              }}
-              className={`absolute z-0
+        <Fade key={slides[currentSlide].id} in={true} timeout={600}>
+          <div
+            ref={slideRef}
+            key={slides[currentSlide].id}
+            className="relative w-full max-w-5xl aspect-video flex border border-dotted border-gray-300 m-3"
+            style={getSlideBackgroundStyle(slides[currentSlide])}
+          >
+            {/* 2.3 Adding elements to slides */}
+            {slides[currentSlide].elements?.map((element: SlideElement, index) => (
+              <div
+                key={index}
+                onMouseDown={(e) => handleMouseDown(e, element, index)}
+                onClick={(e) => {
+                  setSelectedIndex(index); 
+                  e.stopPropagation();
+                }}
+                onDoubleClick={(e) => handleDoubleClick(e, index) }
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  handleDeleteElement(index);
+                }}
+                className={`absolute z-0
                 ${selectedIndex === index 
-              ? "outline outline-1 outline-[#226EDE] cursor-grab" 
-              : `hover:outline hover:outline-2 hover:outline-[#226EDE] ${element.type === "text" ? "outline outline-2 outline-gray-100" : ""}`
-            }`}
-              style={{
-                width: element.xSize + "%", 
-                height: element.ySize + "%", 
-                left: (element.xPos ?? "0") + "%", 
-                top: (element.yPos ?? "0") + "%"
-              }}
-            >
-              {element.type === "text" ? (
-                <div className="overflow-scroll [scrollbar-width:none] [-ms-overflow-style:none] hover:[scrollbar-width:thin] hover:[-ms-overflow-style:thin] w-full h-full">
-                  <p style={{ color: element.color, fontSize: `${element.fontSize}em`, fontFamily: `${element.fontFamily}` }}>
-                    {element.content}
-                  </p>
-                </div>
-              ) : element.type === "image" ? (
-                <img className="relative w-full h-full rounded-md flex items-center justify-center object-contain pointer-events-none select-none" src={element.content} alt={element.alt || ""}/>
-              ) : element.type === "video" ? (
-                <div
-                  className="relative w-full h-full rounded-md border-4 border-slate-300 bg-white overflow-hidden hover:border-sky-400 hover:shadow-sm transition"
-                >
-                  <iframe
-                    className="w-full h-full select-none"
-                    src={`${element.content}${element.autoplay ? element.content.includes("?") ? "&autoplay=1": "?autoplay=1" : ""}`}
-                    allow="autoplay;"
-                    allowFullScreen
-                  />
-                </div>
-              ) : element.type === "code" ? (
-                <div
-                  className="relative w-full h-full bg-[#1e1e1e] overflow-scroll [scrollbar-width:none] [-ms-overflow-style:none] transition text-white whitespace-nowrap"
-                  style={{ scrollbarWidth: "thin", scrollbarColor: "grey #1e1e1e" }}
-                >
-                  <SyntaxHighlighter
-                    language={detectLanguage(element.content)}
-                    style={vscDarkPlus}
-                    showLineNumbers
-                    wrapLines
-                    lineNumberStyle={{
-                      color: "#708586",
-                      minWidth: "2.5em",
-                    }}
+                ? "outline outline-1 outline-[#226EDE] cursor-grab" 
+                : `hover:outline hover:outline-2 hover:outline-[#226EDE] ${element.type === "text" ? "outline outline-2 outline-gray-100" : ""}`
+              }`}
+                style={{
+                  width: element.xSize + "%", 
+                  height: element.ySize + "%", 
+                  left: (element.xPos ?? "0") + "%", 
+                  top: (element.yPos ?? "0") + "%"
+                }}
+              >
+                {element.type === "text" ? (
+                  <div className="overflow-scroll [scrollbar-width:none] [-ms-overflow-style:none] hover:[scrollbar-width:thin] hover:[-ms-overflow-style:thin] w-full h-full">
+                    <p style={{ color: element.color, fontSize: `${element.fontSize}em`, fontFamily: `${element.fontFamily}` }}>
+                      {element.content}
+                    </p>
+                  </div>
+                ) : element.type === "image" ? (
+                  <img className="relative w-full h-full rounded-md flex items-center justify-center object-contain pointer-events-none select-none" src={element.content} alt={element.alt || ""}/>
+                ) : element.type === "video" ? (
+                  <div
+                    className="relative w-full h-full rounded-md border-4 border-slate-300 bg-white overflow-hidden hover:border-sky-400 hover:shadow-sm transition"
                   >
-                    {element.content}
-                  </SyntaxHighlighter>
-                </div>
-              ) : null}
+                    <iframe
+                      className="w-full h-full select-none"
+                      src={`${element.content}${element.autoplay ? element.content.includes("?") ? "&autoplay=1": "?autoplay=1" : ""}`}
+                      allow="autoplay;"
+                      allowFullScreen
+                    />
+                  </div>
+                ) : element.type === "code" ? (
+                  <div
+                    className="relative w-full h-full bg-[#1e1e1e] overflow-scroll [scrollbar-width:none] [-ms-overflow-style:none] transition text-white whitespace-nowrap"
+                    style={{ scrollbarWidth: "thin", scrollbarColor: "grey #1e1e1e" }}
+                  >
+                    <SyntaxHighlighter
+                      language={detectLanguage(element.content)}
+                      style={vscDarkPlus}
+                      showLineNumbers
+                      wrapLines
+                      lineNumberStyle={{
+                        color: "#708586",
+                        minWidth: "2.5em",
+                      }}
+                    >
+                      {element.content}
+                    </SyntaxHighlighter>
+                  </div>
+                ) : null}
 
-              {selectedIndex === index && (
-                <>
-                  <span onMouseDown={(e) => handleCornerDown(e, element, index, "tl")} className="absolute -top-[3px] -left-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10 cursor-nw-resize" />
-                  <span onMouseDown={(e) => handleCornerDown(e, element, index, "tr")} className="absolute -top-[3px] -right-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10 cursor-ne-resize" />
-                  <span onMouseDown={(e) => handleCornerDown(e, element, index, "bl")} className="absolute -bottom-[3px] -left-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10 cursor-sw-resize" />
-                  <span onMouseDown={(e) => handleCornerDown(e, element, index, "br")} className="absolute -bottom-[3px] -right-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10 cursor-se-resize" />
-                </>
-              )}
-            </div>
-          ))}
-          <p className="absolute bottom-2 left-2 text-sm text-gray-500">
-            {currentSlide + 1}
-          </p>
-        </div>
+                {selectedIndex === index && (
+                  <>
+                    <span onMouseDown={(e) => handleCornerDown(e, element, index, "tl")} className="absolute -top-[3px] -left-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10 cursor-nw-resize" />
+                    <span onMouseDown={(e) => handleCornerDown(e, element, index, "tr")} className="absolute -top-[3px] -right-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10 cursor-ne-resize" />
+                    <span onMouseDown={(e) => handleCornerDown(e, element, index, "bl")} className="absolute -bottom-[3px] -left-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10 cursor-sw-resize" />
+                    <span onMouseDown={(e) => handleCornerDown(e, element, index, "br")} className="absolute -bottom-[3px] -right-[3px] w-[5px] h-[5px] bg-[#226EDE] z-10 cursor-se-resize" />
+                  </>
+                )}
+              </div>
+            ))}
+            <p className="absolute bottom-2 left-2 text-sm text-gray-500">
+              {currentSlide + 1}
+            </p>
+          </div>
+        </Fade>
       )}
     </div>
   )
