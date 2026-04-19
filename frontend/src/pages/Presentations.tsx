@@ -67,9 +67,7 @@ const Presentations = () => {
   const parseNum = () => {
     if (num !== undefined) {
       const parsed = parseInt(num, 10);
-      if (parsed && parsed >= 1) {
-        return parsed - 1;
-      }
+      if (!isNaN(parsed) && parsed >= 1) return parsed - 1;
     }
     return 0;
   }
@@ -276,6 +274,10 @@ const Presentations = () => {
     });
   };
 
+  const handlePreviewDeck = () => {
+    window.open(`/presentation/${id}/${num}/preview`, "_blank", "noopener, noreferrer");
+  }
+
   const handleSettingsToggle = () => {
     setOpenSettings((openSettings) => {
       const next = !openSettings;
@@ -471,6 +473,7 @@ const Presentations = () => {
             openDashboard={() => navigate("/dashboard")}
             toggleTools={handleToolsToggle}
             toggleSlideDeck={handleSlideDeck}
+            togglePreviewDeck={handlePreviewDeck}
             toggleSettings={handleSettingsToggle}
             deletePresentation={handleOpenDeletePresentation}
           />
