@@ -338,3 +338,43 @@ export const apiReorderSlides = async (pid, slides) => {
 
   return presentations;
 }
+
+export const apiSaveRevision = async (pid, revision) => {
+  const token = localStorage.getItem("token");
+
+  const dataStore = await apiFetchStore();
+  const store = dataStore.store || {};
+  const presentations = store.presentations || [];
+
+  const updatedPresentations = presentations.map((p) => {
+    if (p.id !== pid) return p;
+
+    const existingRevisions = p.revisions || [];
+
+    return {
+      ...p,
+      revisions: [revision, ...existingRevisions],
+    };
+  });
+
+  const res = await fetch(`${URL}/store`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      store: {
+        ...store,
+        presentations: updatedPresentations,
+      },
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error);
+  }
+
+  return updatedPresentations;
+};

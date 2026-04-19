@@ -1,4 +1,4 @@
-import { FaArrowLeft, FaBars, FaTrashAlt } from "react-icons/fa";
+import { FaArrowLeft, FaBars, FaTrashAlt, FaRegClock } from "react-icons/fa";
 import { MdSettings, MdGridView, MdPreview } from "react-icons/md";
 
 export interface SideBarProps {
@@ -6,12 +6,13 @@ export interface SideBarProps {
   toggleTools: () => void;
   toggleSlideDeck: () => void;
   togglePreviewDeck: () => void;
+  toggleRevisionHistory: () => void;
   toggleSettings: () => void;
   deletePresentation: () => void;
 }
 
 export const SideBar = (props: SideBarProps) => {
-  const { openDashboard, toggleTools, toggleSlideDeck, togglePreviewDeck, toggleSettings, deletePresentation } = props;
+  const { openDashboard, toggleTools, toggleSlideDeck, togglePreviewDeck, toggleRevisionHistory, toggleSettings, deletePresentation } = props;
 
   return (
     <div className="flex flex-col items-center justify-between p-3.5 bg-black h-full">
@@ -55,6 +56,17 @@ export const SideBar = (props: SideBarProps) => {
           }}
         >
           <MdPreview className="text-gray-400 hover:text-red-500" size="1.1rem"/>
+        </button>
+        <button
+          title="Revision History"
+          aria-label="Revision History"
+          className="cursor-pointer"
+          onClick={(e) => {
+            e.currentTarget.blur();
+            toggleRevisionHistory();
+          }}
+        >
+          <FaRegClock className="text-gray-400 hover:text-red-500" size="1.1rem"/>
         </button>
       </div>
       <div className="flex flex-col gap-5">
