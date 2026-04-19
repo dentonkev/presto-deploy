@@ -6,6 +6,7 @@ import { apiFetchStore } from "../api";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { FaAngleLeft, FaAngleRight } from "react-icons/fa";
+import { Fade } from "@mui/material";
 
 const DEFAULT_BACKGROUND: SlideBackground = {
   style: "solid",
@@ -99,65 +100,67 @@ const Preview = () => {
 
   return (
     <div className="flex flex-col items-center justify-center h-screen w-screen overflow-hidden bg-black">
-      <div
-        className="relative w-screen h-screen"
-        style={getSlideBackgroundStyle(slides[currentSlide])}
-      >
-        {slides[currentSlide].elements?.map((element, index) => (
-          <div
-            key={index}
-            className="absolute"
-            style={{
-              width: element.xSize + "%", 
-              height: element.ySize + "%", 
-              left: (element.xPos ?? "0") + "%", 
-              top: (element.yPos ?? "0") + "%"
-            }}
-          >
-            {element.type === "text" ? (
-              <div className="overflow-scroll [scrollbar-width:none] [-ms-overflow-style:none] hover:[scrollbar-width:thin] hover:[-ms-overflow-style:thin] w-full h-full">
-                <p style={{ color: element.color, fontSize: `${element.fontSize}em`, fontFamily: `${element.fontFamily}` }}>
-                  {element.content}
-                </p>
-              </div>
-            ) : element.type === "image" ? (
-              <img className="relative w-full h-full rounded-md flex items-center justify-center object-contain pointer-events-none select-none" src={element.content} alt={element.alt || ""}/>
-            ) : element.type === "video" ? (
-              <div
-                className="relative w-full h-full bg-white overflow-hidden"
-              >
-                <iframe
-                  className="w-full h-full select-none"
-                  src={`${element.content}${element.autoplay ? element.content.includes("?") ? "&autoplay=1": "?autoplay=1" : ""}`}
-                  allow="autoplay;"
-                  allowFullScreen
-                />
-              </div>
-            ) : element.type === "code" ? (
-              <div
-                className="relative w-full h-full bg-[#1e1e1e] overflow-scroll [scrollbar-width:none] [-ms-overflow-style:none] transition text-white whitespace-nowrap"
-                style={{ scrollbarWidth: "thin", scrollbarColor: "grey #1e1e1e" }}
-              >
-                <SyntaxHighlighter
-                  language={detectLanguage(element.content)}
-                  style={vscDarkPlus}
-                  showLineNumbers
-                  wrapLines
-                  lineNumberStyle={{
-                    color: "#708586",
-                    minWidth: "2.5em",
-                  }}
+      <Fade key={slides[currentSlide].id} in={true} timeout={600}>
+        <div
+          className="relative w-screen h-screen"
+          style={getSlideBackgroundStyle(slides[currentSlide])}
+        >
+          {slides[currentSlide].elements?.map((element, index) => (
+            <div
+              key={index}
+              className="absolute"
+              style={{
+                width: element.xSize + "%", 
+                height: element.ySize + "%", 
+                left: (element.xPos ?? "0") + "%", 
+                top: (element.yPos ?? "0") + "%"
+              }}
+            >
+              {element.type === "text" ? (
+                <div className="overflow-scroll [scrollbar-width:none] [-ms-overflow-style:none] hover:[scrollbar-width:thin] hover:[-ms-overflow-style:thin] w-full h-full">
+                  <p style={{ color: element.color, fontSize: `${element.fontSize}em`, fontFamily: `${element.fontFamily}` }}>
+                    {element.content}
+                  </p>
+                </div>
+              ) : element.type === "image" ? (
+                <img className="relative w-full h-full rounded-md flex items-center justify-center object-contain pointer-events-none select-none" src={element.content} alt={element.alt || ""}/>
+              ) : element.type === "video" ? (
+                <div
+                  className="relative w-full h-full bg-white overflow-hidden"
                 >
-                  {element.content}
-                </SyntaxHighlighter>
-              </div>
-            ) : null}
-          </div>
-        ))}
-        <p className="absolute bottom-2 left-2 text-sm text-gray-500">
-          {currentSlide + 1}
-        </p>
-      </div>
+                  <iframe
+                    className="w-full h-full select-none"
+                    src={`${element.content}${element.autoplay ? element.content.includes("?") ? "&autoplay=1": "?autoplay=1" : ""}`}
+                    allow="autoplay;"
+                    allowFullScreen
+                  />
+                </div>
+              ) : element.type === "code" ? (
+                <div
+                  className="relative w-full h-full bg-[#1e1e1e] overflow-scroll [scrollbar-width:none] [-ms-overflow-style:none] transition text-white whitespace-nowrap"
+                  style={{ scrollbarWidth: "thin", scrollbarColor: "grey #1e1e1e" }}
+                >
+                  <SyntaxHighlighter
+                    language={detectLanguage(element.content)}
+                    style={vscDarkPlus}
+                    showLineNumbers
+                    wrapLines
+                    lineNumberStyle={{
+                      color: "#708586",
+                      minWidth: "2.5em",
+                    }}
+                  >
+                    {element.content}
+                  </SyntaxHighlighter>
+                </div>
+              ) : null}
+            </div>
+          ))}
+          <p className="absolute bottom-2 left-2 text-sm text-gray-500">
+            {currentSlide + 1}
+          </p>
+        </div>
+      </Fade>
       {slides.length > 1 && (
         <div className="z-50 fixed bottom-2 right-13">
           <button
