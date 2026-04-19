@@ -1,19 +1,20 @@
 import { FaArrowLeft, FaBars, FaTrashAlt } from "react-icons/fa";
-import { MdSettings, MdGridView } from "react-icons/md";
+import { MdSettings, MdGridView, MdPreview } from "react-icons/md";
 
 export interface SideBarProps {
   openDashboard: () => void;
   toggleTools: () => void;
   toggleSlideDeck: () => void;
+  togglePreviewDeck: () => void;
   toggleSettings: () => void;
   deletePresentation: () => void;
 }
 
 export const SideBar = (props: SideBarProps) => {
-  const { openDashboard, toggleTools, toggleSlideDeck, toggleSettings, deletePresentation } = props;
+  const { openDashboard, toggleTools, toggleSlideDeck, togglePreviewDeck, toggleSettings, deletePresentation } = props;
 
   return (
-    <div className="flex flex-col justify-between p-3.5 bg-black h-full">
+    <div className="flex flex-col items-center justify-between p-3.5 bg-black h-full">
       <div className="flex flex-col gap-5">
         <button 
           aria-label="Go to Dashboard"
@@ -43,6 +44,17 @@ export const SideBar = (props: SideBarProps) => {
           }}
         >
           <MdGridView className="text-gray-400 hover:text-red-500"/>
+        </button>
+        <button
+          title="Preview Slide"
+          aria-label="Preview Slide Deck"
+          className="cursor-pointer"
+          onClick={(e) => {
+            e.currentTarget.blur();
+            togglePreviewDeck();
+          }}
+        >
+          <MdPreview className="text-gray-400 hover:text-red-500" size="1.1rem"/>
         </button>
       </div>
       <div className="flex flex-col gap-5">
