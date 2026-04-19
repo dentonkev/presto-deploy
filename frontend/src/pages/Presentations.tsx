@@ -2,7 +2,7 @@ import { useNavigate, useParams } from "react-router-dom"
 import { Box, Button, IconButton, Modal, TextField } from "@mui/material";
 import { FaEdit, FaAngleLeft, FaAngleRight } from "react-icons/fa";
 import React, { useState, useEffect, useContext, useRef } from "react";
-import { apiDeletePresentation, apiAddElement, apiDeleteElement, apiEditPresentation, apiEditTitle, apiFetchStore, apiUpdatePresentation, apiLogout } from "../api";
+import { apiDeletePresentation, apiAddElement, apiDeleteElement, apiEditPresentation, apiEditTitle, apiFetchStore, apiUpdatePresentation, apiLogout, apiSaveRevision } from "../api";
 import type { Presentation } from "./Dashboard";
 import ErrorContext from "../context/ErrorContext";
 import { v4 as uuidv4 } from "uuid";
@@ -18,6 +18,7 @@ import { RightSideBar } from "../components/RightSideBar";
 import { CodeModal } from "../components/CodeModal";
 import { ThemeModal } from "../components/ThemeModal";
 import { SlideDeck } from "../components/SlideDeck";
+import { RevisionHistory } from "../components/RevisionHistory";
 
 export type SlideElement = {
   xSize: string;
@@ -49,6 +50,12 @@ export type SlideData = {
   useDefaultBackground?: boolean;
   background?: SlideBackground;
 };
+
+export interface Revision {
+  id: string;
+  timestamp: number;
+  slides: SlideData[];
+}
 
 const DEFAULT_BACKGROUND: SlideBackground = {
   style: "solid",
@@ -82,10 +89,13 @@ const Presentations = () => {
   const [openSettings, setOpenSettings] = useState(false);
   const [openTools, setOpenTools] = useState(true);
   const [openSlideDeck, setOpenSlideDeck] = useState(false);
+  const [openRevision, setOpenRevision] = useState(false);
   const [description, setDescription] = useState("");
   const [thumbnail, setThumbnail] = useState<string | ArrayBuffer | null>(null);
   const [deleteMode, setDeleteMode] = useState<'presentation' | 'slide' | null>(null);
   const [defaultBackground, setDefaultBackground] = useState<SlideBackground>(DEFAULT_BACKGROUND);
+  const [revisions, setRevisions] = useState<Revision[]>([]);
+  const lastSavedRef = useRef<number>(0);
 
   // Generic element properties
   const [currElement, setCurrElement] = useState<number | null>(null);
@@ -123,7 +133,7 @@ const Presentations = () => {
     await apiEditTitle(id, newName);
     setName(newName);
     setOpenTitle(false);
-  }
+  };
 
   const handleThumbnail = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -147,7 +157,7 @@ const Presentations = () => {
     };
     reader.readAsDataURL(file);
     e.target.value = "";
-  }
+  };
 
   const handleSettingsSave = async () => {
     await apiEditPresentation(id, {
@@ -157,6 +167,44 @@ const Presentations = () => {
     setOpenSettings(false);
   };
 
+  const saveRevision = async () => {
+    const now = Date.now();
+    
+    // Waits 1 minute before saving
+    if (now - lastSavedRef.current < 60_000) return;
+
+    lastSavedRef.current = now;
+
+    const revision = {
+      id: uuidv4(),
+      timestamp: now,
+      slides: structuredClone(slides),
+    };
+
+    setRevisions(prev => [revision, ...prev]);
+
+    try {
+      await apiSaveRevision(id, revision);
+    } catch (err) {
+      console.error("Failed to save revision", err);
+    }
+  };
+
+  const handleRestore = async (revision: Revision) => {
+    if (revision.slides.length <= currentSlide) setCurrentSlide(0);
+
+    const newSlides = structuredClone(revision.slides);
+    setSlides(newSlides);
+
+    try {
+      await apiUpdatePresentation(id, newSlides);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        showError(err.message);
+      }
+    }
+  }
+
   const handleCreateSlide = async () => {
     const newSlide = uuidv4();
     const newSlides = [...slides, { id: newSlide, elements: [], useDefaultBackground: true}];
@@ -164,12 +212,13 @@ const Presentations = () => {
       await apiUpdatePresentation(id, newSlides);
       setSlides(newSlides);
       setCurrentSlide(newSlides.length - 1);
+      saveRevision();
     } catch (err: unknown) {
       if (err instanceof Error) {
         showError(err.message);
       }
     }
-  }
+  };
 
   const handleCreateElement = async (newElement: SlideElement, modalClose: (_val: boolean) => void) => {
     try {
@@ -187,6 +236,8 @@ const Presentations = () => {
         return updated;
       });
 
+      saveRevision();
+
       await apiAddElement(id, slides[currentSlide], newElement, currElement);
       modalClose(false);
     } catch (err: unknown) {
@@ -194,7 +245,7 @@ const Presentations = () => {
         showError(err.message); 
       }
     }
-  }
+  };
 
   const handleDeleteElement = async (index: number) => {
     try {
@@ -210,6 +261,9 @@ const Presentations = () => {
 
         return updated;
       });
+
+      saveRevision();
+
       await apiDeleteElement(id, slides[currentSlide], index);
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -221,7 +275,7 @@ const Presentations = () => {
   const handleDeletePresentation = async () => {
     await apiDeletePresentation(id);
     navigate("/dashboard");
-  }
+  };
 
   const handleDeleteSlide = async () => {
     const newSlides = slides.filter((_, i) => i !== currentSlide);
@@ -233,13 +287,13 @@ const Presentations = () => {
 
     await apiUpdatePresentation(id, newSlides);
     setSlides(newSlides);
-
+    saveRevision();
     if (currentSlide > 0) {
       setCurrentSlide(currentSlide - 1)
     } else if (newSlides.length > 0) {
       setCurrentSlide(0);
     }
-  }
+  };
 
   const handleLogout = async () => {
     try {
@@ -258,6 +312,7 @@ const Presentations = () => {
       if (next) {
         setOpenSettings(false);
         setOpenSlideDeck(false);
+        setOpenRevision(false);
       }
       return next;
     });
@@ -276,7 +331,18 @@ const Presentations = () => {
 
   const handlePreviewDeck = () => {
     window.open(`/presentation/${id}/${num}/preview`, "_blank", "noopener, noreferrer");
-  }
+  };
+  
+  const handleRevisionHistory = () => {
+    setOpenRevision((openRevision) => {
+      const next = !openRevision;
+      if (next) {
+        setOpenSettings(false);
+        setOpenTools(false);
+      }
+      return next;
+    });
+  };
 
   const handleSettingsToggle = () => {
     setOpenSettings((openSettings) => {
@@ -284,6 +350,7 @@ const Presentations = () => {
       if (next) {
         setOpenTools(false);
         setOpenSlideDeck(false);
+        setOpenRevision(false);
       }
       return next;
     });
@@ -317,11 +384,14 @@ const Presentations = () => {
       setXPos(newXPos);
       setYPos(newYPos);
     }
+
+    saveRevision();
   };
 
   const handleInteractionComplete = async () => {
     try {
       await apiUpdatePresentation(id, slidesRef.current);
+      saveRevision();
     } catch (err: unknown) {
       if (err instanceof Error) {
         showError(err.message); 
@@ -356,6 +426,8 @@ const Presentations = () => {
       setXPos(newXPos);
       setYPos(newYPos);
     }
+
+    saveRevision();
   };
 
   const handleSaveCurrentBackground = async (background: SlideBackground) => {
@@ -366,8 +438,9 @@ const Presentations = () => {
         } 
         return slide;
       })
-      setSlides(updatedSlides);
       await apiUpdatePresentation(id, updatedSlides);
+      setSlides(updatedSlides);
+      saveRevision();
     } catch (err: unknown) {
       if (err instanceof Error) {
         showError(err.message);
@@ -384,8 +457,9 @@ const Presentations = () => {
         return slide;
       });
 
-      setSlides(updatedSlides);
       await apiUpdatePresentation(id, updatedSlides);
+      setSlides(updatedSlides);
+      saveRevision();
     } catch (err: unknown) {
       if (err instanceof Error) {
         showError(err.message);
@@ -417,9 +491,11 @@ const Presentations = () => {
 
       const loadedDefaultBackground = presentation?.defaultBackground || DEFAULT_BACKGROUND;
       const loadedSlides = (presentation?.slides || []);
+      const loadedRevisions = (presentation?.revisions || []);
 
       setDefaultBackground(loadedDefaultBackground);
       setSlides(loadedSlides);
+      setRevisions(loadedRevisions);
       setName(presentation?.name || ""); 
       setNewName(presentation?.name || ""); 
       setDescription(presentation?.description || "");
@@ -474,6 +550,7 @@ const Presentations = () => {
             toggleTools={handleToolsToggle}
             toggleSlideDeck={handleSlideDeck}
             togglePreviewDeck={handlePreviewDeck}
+            toggleRevisionHistory={handleRevisionHistory}
             toggleSettings={handleSettingsToggle}
             deletePresentation={handleOpenDeletePresentation}
           />
@@ -529,6 +606,13 @@ const Presentations = () => {
               setVideo={setVideo}
               setCode={setCode}
               setTheme={setTheme}
+            />
+          )}
+          {openRevision && (
+            <RevisionHistory
+              revisions={revisions}
+              handleRevisionHistory={handleRevisionHistory}
+              handleRestore={handleRestore}
             />
           )}
           {openSettings && (
