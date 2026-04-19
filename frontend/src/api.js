@@ -1,7 +1,7 @@
 import BACKEND_PORT from "../backend.config.json";
 
 // const URL = `http://localhost:${BACKEND_PORT.BACKEND_PORT}`;
-const URL = `https://z5480685-z5478458-presto-be-deploy.vercel.app`;
+const URL = "https://z5480685-z5478458-presto-be-deploy.vercel.app/";
 
 export const apiLogin = async (email, password) => {
   const res = await fetch(`${URL}/admin/auth/login`, {
