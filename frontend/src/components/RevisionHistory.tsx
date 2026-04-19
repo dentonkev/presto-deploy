@@ -1,5 +1,4 @@
 import { Button } from "@mui/material";
-import { FaEye } from "react-icons/fa";
 import { MdReplay } from "react-icons/md";
 import type { Revision } from "../pages/Presentations";
 
