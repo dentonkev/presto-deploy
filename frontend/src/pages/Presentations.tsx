@@ -639,7 +639,7 @@ const Presentations = () => {
               disabled={currentSlide === 0}
               className={currentSlide === 0 ? "cursor-not-allowed opacity-30" : "cursor-pointer"}
             >
-              <FaAngleLeft className="h-12 w-12 text-[#1875d2]" />
+              <FaAngleLeft className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-[#1875d2]" />
             </button>
             <button
               onClick={() => setCurrentSlide(currentSlide + 1)}
@@ -651,7 +651,7 @@ const Presentations = () => {
                   : "cursor-pointer"
               }
             >
-              <FaAngleRight className="h-12 w-12 text-[#1875d2]" />
+              <FaAngleRight className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-[#1875d2]" />
             </button>
           </div>
         ) : null}
@@ -664,7 +664,10 @@ const Presentations = () => {
             position: "fixed",
             bottom: "2%",
             left: "50%",
-            transform: "translateX(-50%)"
+            transform: "translateX(-50%)",
+            fontSize: { xs: "0.7rem", sm: "0.8rem", md: "0.9rem" },
+            padding: { xs: "4px 10px", sm: "6px 14px" },
+            minWidth: { xs: "90px", sm: "120px" }
           }}
         >
           New Slide

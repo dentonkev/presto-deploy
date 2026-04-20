@@ -102,8 +102,12 @@ const Preview = () => {
     <div className="flex flex-col items-center justify-center h-screen w-screen overflow-hidden bg-black">
       <Fade key={slides[currentSlide].id} in={true} timeout={600}>
         <div
-          className="relative w-screen h-screen"
-          style={getSlideBackgroundStyle(slides[currentSlide])}
+          className="relative"
+          style={{
+            width: "min(100vw, calc(100vh * 16 / 9))",
+            height: "min(100vh, calc(100vw * 9 / 16))",
+            ...getSlideBackgroundStyle(slides[currentSlide])
+          }}
         >
           {slides[currentSlide].elements?.map((element, index) => (
             <div

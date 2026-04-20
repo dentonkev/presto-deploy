@@ -30,7 +30,7 @@ export const RevisionHistory = (props: RevisionProps) => {
   }
 
   return (
-    <div className="absolute left-11 top-0 flex flex-col h-full w-[400px] bg-white shadow-xl overflow-hidden z-51">
+    <div className="absolute left-11 top-0 flex flex-col h-full w-[400px] max-w-[70%] bg-white shadow-xl overflow-hidden z-51">
       <div className="bg-white h-full overflow-y-scroll p-[26px]">
         <div className="font-semibold flex justify-between mb-[10px]">
           Revision History
