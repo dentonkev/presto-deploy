@@ -75,6 +75,9 @@ const Register = () => {
       <Button type="submit" variant="contained">
         Register
       </Button>
+      <Button variant="text" onClick={() => navigate("/login")}>
+        Already have an account?
+      </Button>
     </Box>
   );
 };
