@@ -53,6 +53,9 @@ const Login = () => {
       <Button type="submit" variant="contained">
         Login
       </Button>
+      <Button variant="text" onClick={() => navigate("/register")}>
+        Don&apos;t have an account?
+      </Button>
     </Box>
   );
 };
