@@ -13,7 +13,7 @@ export const Settings = (props: SettingsProps) => {
   const { description, setDescription, thumbnail, handleThumbnail, handleSettingsSave } = props;
 
   return (
-    <div className="absolute left-11 top-0 flex flex-col h-full w-80 bg-white shadow-xl overflow-scroll">
+    <div className="absolute left-11 top-0 flex flex-col h-full w-80 max-w-[70%] bg-white shadow-xl overflow-scroll z-51">
       <div className="bg-white h-full">
         <div className="p-4 font-semibold flex justify-between">
           Settings

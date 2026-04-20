@@ -37,7 +37,7 @@ export const SlideDeck = (props: SlideDeckProps) => {
   return (
     <div className="flex flex-col justify-center absolute left-11 right-0 h-full bg-white p-2.5">
       <div className="text-white sticky mx-auto w-[80%] max-w-[600px] h-[49px] bg-[#1a1a1c] flex items-center p-3 rounded-sm justify-between shadow-md">
-        <p>Drag slides to arrange. Click to navigate to a particular slide.</p>
+        <p className="text-xs sm:text-sm md:text-base lg:text-lg">Drag slides to arrange. Click to navigate to a particular slide.</p>
         <Button 
           variant="contained"
           size="small"
